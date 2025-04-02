@@ -274,7 +274,9 @@ class MarkdownGenerator:
         
         if tech:
             for technology in tech:
-                md.append(f"<img src=\"https://img.shields.io/badge/{technology}-%23007ACC.svg?style=for-the-badge&logo={technology}&logoColor=white\" alt=\"{technology}\">")
+                technology = technology.lower()
+                # md.append(f"<img src=\"https://img.shields.io/badge/{technology}-%23007ACC.svg?style=for-the-badge&logo={technology}&logoColor=white\" alt=\"{technology}\">")
+                md.append(f"<img src=\"https://skillicons.dev/icons?i={technology}\">")
         else:
             md.append("<img src=\"https://img.shields.io/badge/JavaScript-%23F7DF1E.svg?style=for-the-badge&logo=javascript&logoColor=black\" alt=\"JavaScript\">")
             md.append("<img src=\"https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white\" alt=\"TypeScript\">")
