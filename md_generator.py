@@ -293,7 +293,7 @@ class MarkdownGenerator:
         # Footer
         md.append("\n---\n")
         md.append("<p align=\"center\">")
-        md.append(f"  Made with ❤️ by <a href=\"https://github.com/{username}\">{username}</a>")
+        md.append("  Made with ❤️ by <a href=\"https://github.com/kushal1o1/MDFileCreator\">MdCreator</a>")
         md.append("</p>")
         
         return "\n".join(md)
@@ -355,6 +355,10 @@ class MarkdownGenerator:
         # License
         license_type = self.data.get("license", "MIT").strip()
         md.append(f"\n## License\n{license_type}")
+        
+        # Footer
+        md.append("\n---\n")
+        md.append("Made with ❤️ by [MdCreator](https://github.com/kushal1o1/MDFileCreator)")
         
         return "\n".join(md)
     
@@ -488,6 +492,12 @@ class MarkdownGenerator:
         if contact:
             md.append("\n## 📬 Contact")
             md.append(f"\n{contact}")
+        
+        # Footer
+        md.append("\n---\n")
+        md.append("<div align=\"center\">")
+        md.append("  <p>Made with ❤️ by <a href=\"https://github.com/kushal1o1/MDFileCreator\">MdCreator</a></p>")
+        md.append("</div>")
         
         return "\n".join(md)
     
@@ -646,6 +656,10 @@ class MarkdownGenerator:
         else:
             md.append("\nProvide your contact information here.")
         
+        # Footer
+        md.append("\n---\n")
+        md.append("Made with ❤️ by [MdCreator](https://github.com/kushal1o1/MDFileCreator)")
+        
         return "\n".join(md)
     
     def _generate_corporate_template(self):
@@ -757,5 +771,6 @@ class MarkdownGenerator:
         # Footer
         md.append("\n---")
         md.append("\n*This document is confidential and proprietary.*")
+        md.append("\nGenerated with [MdCreator](https://github.com/kushal1o1/MDFileCreator)")
         
         return "\n".join(md) 
