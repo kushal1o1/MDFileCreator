@@ -1,70 +1,154 @@
-# MD File Creator
+# MDFileCreator
+
+<p align="center">
+  <img src="./md_icon.ico" alt="Project Logo" width="200" height="200">
+</p>
+
+<p align="center">
+  <a href="https://github.com/kushal1o1/MDFileCreator/stargazers"><img src="https://img.shields.io/github/stars/kushal1o1/MDFileCreator" alt="Stars Badge"/></a>
+  <a href="https://github.com/kushal1o1/MDFileCreator/network/members"><img src="https://img.shields.io/github/forks/kushal1o1/MDFileCreator" alt="Forks Badge"/></a>
+  <a href="https://github.com/kushal1o1/MDFileCreator/pulls"><img src="https://img.shields.io/github/issues-pr/kushal1o1/MDFileCreator" alt="Pull Requests Badge"/></a>
+  <a href="https://github.com/kushal1o1/MDFileCreator/issues"><img src="https://img.shields.io/github/issues/kushal1o1/MDFileCreator" alt="Issues Badge"/></a>
+  <a href="https://github.com/kushal1o1/MDFileCreator/graphs/contributors"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/kushal1o1/MDFileCreator?color=2b9348"></a>
+</p>
+
+<p align="center">
+  <b>A professional desktop application for creating beautiful README.md files for your GitHub projects.</b>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#demo">Demo</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#usage">Usage</a> •
+  <a href="#configuration">Configuration</a> •
+  <a href="#api-reference">API Reference</a> •
+  <a href="#documentation">Documentation</a> •
+  <a href="#roadmap">Roadmap</a> •
+  <a href="#contributing">Contributing</a> •
+  <a href="#license">License</a> •
+  <a href="#contact">Contact</a> •
+  <a href="#acknowledgments">Acknowledgments</a>
+</p>
+
+
+## Overview
 
 A professional desktop application for creating beautiful README.md files for your GitHub projects.
 
-![MD File Creator Screenshot](path/to/screenshot.png)
-
 ## Features
 
-- **Modern UI** - Clean, responsive interface with light and dark mode support
-- **Live Preview** - See your markdown rendered in real-time with HTML preview
-- **Template Management** - Save and load templates for consistent README styles
-- **Dynamic Content** - Easily add/remove features, prerequisites, technologies and more
-- **Image Support** - Include logos, screenshots, and demo GIFs with file picker
-- **Modern Styling** - Generate beautiful, well-structured README files
-- **Enhanced Performance** - Optimized for smooth operation even with large files
-- **Cross-Platform** - Works on Windows, macOS, and Linux
+- **Modern UI - Clean, responsive interface with light and dark mode support**
+- **Template Management - Save and load templates for consistent README styles**
+- **Dynamic Content - Easily add/remove features, prerequisites, technologies and more**
+- **mage Support - Include logos, screenshots, and demo GIFs with links**
+- **Modern Styling - Generate beautiful, well-structured README files**
+- **Enhanced Performance - Optimized for smooth operation even with large files**
+- **Cross-Platform - Works on Windows, macOS, and Linux**
+
+
+## Demo
+
+<p align="center">
+  <img src="path/to/demo.gif" alt="Demo" width="600">
+</p>
+
+## Screenshot
+![Screenshot 1](./images/mdCreator.jpg)
+![Screenshot 2](./images/mdCreator2.jpg)
+![Screenshot 3](./images/mdCreator3.jpg)
+
 
 ## Installation
-
-1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/MdFileCreator.git
-cd MdFileCreator
-```
+# Clone the repository
+git clone https://github.com/kushal1o1/MDFileCreator.git
 
-2. Install the required dependencies:
-```bash
+# Navigate to the project directory
+cd MDFileCreator
+
 pip install -r requirements.txt
 ```
 
-3. Run the application:
-```bash
-python main.py
-```
+### Prerequisites
+- **python**
+- **pillow**
+- **customtkinter**
+- **Refer requirements.txt**
 
 ## Usage
 
-1. Fill in the details in each tab (Basic Info, Features, Media, etc.)
-2. Preview your README in real-time in the right panel
-3. Save your markdown file when you're satisfied
-4. (Optional) Save your template for future use
+```javascript
+python main.py
+```
 
-## Requirements
+## Configuration
 
-- Python 3.7 or higher
-- Tkinter (usually comes with Python)
-- Packages listed in requirements.txt:
-  - customtkinter
-  - markdown
-  - tkhtmlview
-  - pillow
+### Configuration File
 
-## What's New
+Create a `config.json` file in the root directory with the following structure:
 
-The application has been completely redesigned with:
+```json
+nth
+```
 
-- Modern UI using CustomTkinter
-- Enhanced performance for smoother operation
-- Better error handling to prevent crashes
-- Improved file handling and preview
-- Theme customization options
-- Optimized code structure with proper separation of concerns
+### Environment Variables
 
-## License
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NO env vars` | No env variables used | `True` |
 
-MIT License
+## Directory Structure
+
+```
+MdFileCreator/
+├── .gitignore
+├── app.py
+├── create_icon.py
+├── images/
+│   ├── mdCreator.jpg
+│   ├── mdCreator2.jpg
+│   └── mdCreator3.jpg
+├── main.py
+├── md_generator.py
+├── md_icon.ico
+├── README.md
+├── requirements.txt
+├── ui_components.py
+└── __pycache__/
+
+
+
+```
+
+## Technologies Used
+
+<p align="center">
+<img src="https://skillicons.dev/icons?i=python">
+</p>
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. 
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+Please make sure to update tests as appropriate and adhere to the [code of conduct](CODE_OF_CONDUCT.md).
+
+## License
+
+This project is licensed under the MIT License.
+
+## Contact
+
+share.kushal@gmail.com
+
+---
+
+<p align="center">
+  Made with ❤️ by <a href="https://github.com/kushal1o1/MDFileCreator">MdCreator</a>
+</p>
