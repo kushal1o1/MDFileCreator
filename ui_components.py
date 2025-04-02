@@ -410,42 +410,54 @@ class UsageCodeEditor(CTkFrame):
         self.callback(content)
     
     def load_example(self, language):
-        """Load a predefined example for the selected language"""
+        """Load an example code snippet based on the selected language"""
         examples = {
             "javascript": """// Import the module
-import { MyComponent } from 'my-library';
+import { Component } from 'react';
 
-// Initialize
-const instance = new MyComponent({
-  name: 'Example',
-  options: {
-    debug: true,
-    timeout: 1000
+// Define a component
+class Example extends Component {
+  state = {
+    count: 0
+  };
+  
+  increment = () => {
+    this.setState({ count: this.state.count + 1 });
   }
-});
+  
+  render() {
+    return (
+      <div>
+        <h1>Count: {this.state.count}</h1>
+        <button onClick={this.increment}>Increment</button>
+      </div>
+    );
+  }
+}""",
+            "python": """# Import libraries
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
 
-// Use the functionality
-instance.doSomething();
-const result = instance.processData([1, 2, 3]);
-console.log(result);""",
-            
-            "python": """# Import the module
-from my_package import MyClass
+# Load and prepare data
+data = pd.read_csv('data.csv')
+X = data.drop('target', axis=1)
+y = data['target']
 
-# Initialize 
-instance = MyClass(
-    name="Example", 
-    debug=True,
-    config_path="./config.json"
-)
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-# Use the functionality
-instance.do_something()
-results = instance.process_data([1, 2, 3])
-print(results)""",
-            
+# Train model
+from sklearn.ensemble import RandomForestClassifier
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
+
+# Evaluate
+accuracy = model.score(X_test, y_test)
+print(f"Model accuracy: {accuracy:.2f}")""",
             "bash": """#!/bin/bash
-# Clone the repository
+
+# Clone repository
 git clone https://github.com/username/project.git
 
 # Navigate to the project directory
@@ -461,8 +473,8 @@ npm start
 npm run build"""
         }
         
-        # Update language dropdown
-        if language in self.language_var._values:
+        # Update language dropdown if it's in the available options
+        if language in examples:
             self.language_var.set(language)
         
         # Clear existing content and insert example
