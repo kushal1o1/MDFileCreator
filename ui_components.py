@@ -14,6 +14,34 @@ except ImportError:
     from customtkinter import CTkComboBox, CTkSwitch, CTkOptionMenu
 
 
+# Technology categories and options for the selector
+TECH_CATEGORIES = {
+    "Languages": [
+        "Python", "JavaScript", "TypeScript", "Java", "C#", "C++", 
+        "Go", "Rust", "PHP", "Ruby", "Swift", "Kotlin"
+    ],
+    "Frontend": [
+        "React", "Vue", "Angular", "HTML", "CSS", "Sass", 
+        "TailwindCSS", "Bootstrap", "Material-UI", "Chakra-UI"
+    ],
+    "Backend": [
+        "Node", "Django", "Flask", "Express", "FastAPI", "Spring Boot",
+        "ASP.NET", "Laravel"
+    ],
+    "Database": [
+        "MongoDB", "MySQL", "PostgreSQL", "Redis", "SQLite", "Oracle",
+        "SQL Server", "Firestore"
+    ],
+    "DevOps": [
+        "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Git", "GitHub", "GitLab",
+        "Jenkins", "Travis CI", "CircleCI"
+    ],
+    "Mobile": [
+        "React Native", "Flutter", "Android", "iOS", "Xamarin", "Ionic"
+    ]
+}
+
+
 class FeaturesList(CTkFrame):
     """A component for managing a list of features"""
     
@@ -106,8 +134,248 @@ class FeaturesList(CTkFrame):
         self.populate_list()
 
 
+class TechnologySelector(CTkFrame):
+    """A component for selecting technologies using a tag-based approach"""
+    
+    def __init__(self, master, callback, initial_items=None):
+        super().__init__(master)
+        self.callback = callback
+        self.selected_techs = initial_items or []
+        
+        self.create_widgets()
+        
+    def create_widgets(self):
+        # Create tabs container for categories
+        self.tabs_container = CTkScrollableFrame(self, height=250)
+        self.tabs_container.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        # Create tab buttons for each technology category
+        tab_buttons_frame = CTkFrame(self.tabs_container)
+        tab_buttons_frame.pack(fill="x", pady=10)
+        
+        self.current_category = tk.StringVar(value=next(iter(TECH_CATEGORIES)))
+        
+        # Create buttons for each category
+        for i, category in enumerate(TECH_CATEGORIES.keys()):
+            def make_category_func(cat):
+                return lambda: self.show_category(cat)
+                
+            CTkButton(
+                tab_buttons_frame,
+                text=category,
+                command=make_category_func(category),
+                width=100,
+                height=28,
+                border_width=1,
+                fg_color=("gray90", "gray20"),
+                hover_color=("gray70", "gray30")
+            ).grid(row=0, column=i, padx=5, pady=5, sticky="ew")
+            
+        # Make columns expandable
+        for i in range(len(TECH_CATEGORIES)):
+            tab_buttons_frame.columnconfigure(i, weight=1)
+        
+        # Technology tags container
+        self.tech_content = CTkFrame(self.tabs_container, fg_color="transparent")
+        self.tech_content.pack(fill="both", expand=True, pady=10)
+        
+        # Selected technologies section
+        selected_frame = CTkFrame(self)
+        selected_frame.pack(fill="x", padx=10, pady=10)
+        
+        CTkLabel(selected_frame, text="Selected Technologies:", font=("Segoe UI", 12, "bold")).pack(anchor="w", pady=(0, 5))
+        
+        # Container for selected tech tags
+        selected_tags_frame = CTkScrollableFrame(selected_frame, height=100)
+        selected_tags_frame.pack(fill="x", pady=5)
+        
+        self.selected_container = CTkFrame(selected_tags_frame, fg_color="transparent")
+        self.selected_container.pack(fill="both", expand=True)
+        
+        # Custom technology entry
+        custom_frame = CTkFrame(selected_frame)
+        custom_frame.pack(fill="x", pady=10)
+        
+        self.custom_tech_var = tk.StringVar()
+        custom_tech_entry = CTkEntry(
+            custom_frame, 
+            textvariable=self.custom_tech_var, 
+            width=200, 
+            height=35, 
+            placeholder_text="Enter custom technology"
+        )
+        custom_tech_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        
+        # Add button for custom tech
+        add_btn = CTkButton(
+            custom_frame,
+            text="Add Custom",
+            command=self.add_custom_tech,
+            height=35
+        )
+        add_btn.pack(side="right")
+        
+        # Bind Enter key to add custom tech
+        custom_tech_entry.bind("<Return>", lambda e: self.add_custom_tech())
+        
+        # Initial display
+        self.show_category(self.current_category.get())
+        self.refresh_selected_techs()
+        
+    def show_category(self, category):
+        """Display technologies for the selected category"""
+        self.current_category.set(category)
+        
+        # Clear existing content
+        for widget in self.tech_content.winfo_children():
+            widget.destroy()
+            
+        # Create grid layout for technology buttons
+        techs = TECH_CATEGORIES.get(category, [])
+        columns = 4  # Number of columns in the grid
+        
+        for i, tech in enumerate(techs):
+            row, col = divmod(i, columns)
+            
+            # Check if this tech is already selected
+            is_selected = tech in self.selected_techs
+            
+            # Create button with appropriate styling based on selection state
+            btn = CTkButton(
+                self.tech_content,
+                text=tech,
+                command=lambda t=tech, s=is_selected: self.toggle_tech(t),
+                width=80,
+                height=30,
+                fg_color="#3498db" if is_selected else "gray30",
+                hover_color="#2980b9" if is_selected else "gray40",
+                border_width=1
+            )
+            btn.grid(row=row, column=col, padx=5, pady=5, sticky="ew")
+            
+        # Make columns expandable
+        for col in range(columns):
+            self.tech_content.columnconfigure(col, weight=1)
+    
+    def toggle_tech(self, tech):
+        """Toggle a technology's selection state"""
+        if tech in self.selected_techs:
+            self.selected_techs.remove(tech)
+        else:
+            self.selected_techs.append(tech)
+            
+        # Refresh the current category view and selected tags
+        self.show_category(self.current_category.get())
+        self.refresh_selected_techs()
+        self.callback(self.selected_techs)
+    
+    def add_custom_tech(self):
+        """Add a custom technology not in the predefined list"""
+        tech = self.custom_tech_var.get().strip()
+        if tech and tech not in self.selected_techs:
+            self.selected_techs.append(tech)
+            self.custom_tech_var.set("")  # Clear input
+            self.refresh_selected_techs()
+            self.callback(self.selected_techs)
+    
+    def refresh_selected_techs(self):
+        """Update the display of selected technologies"""
+        # Clear existing tags
+        for widget in self.selected_container.winfo_children():
+            widget.destroy()
+            
+        # No technologies selected
+        if not self.selected_techs:
+            CTkLabel(
+                self.selected_container, 
+                text="No technologies selected yet", 
+                text_color="gray60"
+            ).pack(pady=10)
+            return
+            
+        # Create a flex-wrap style layout for the tags
+        current_frame = CTkFrame(self.selected_container, fg_color="transparent")
+        current_frame.pack(fill="x", pady=2)
+        
+        max_width = self.selected_container.winfo_width() - 20  # Approximate padding
+        current_width = 0
+        
+        for tech in self.selected_techs:
+            # Create a frame for each tag
+            tag_frame = CTkFrame(
+                current_frame, 
+                fg_color="#3498db",
+                corner_radius=15
+            )
+            
+            # Approximate width calculation
+            estimated_width = len(tech) * 7 + 50  # Rough estimate: 7 pixels per character + padding
+            
+            # Start a new row if this tag would exceed the frame width
+            if current_width > 0 and current_width + estimated_width > max_width:
+                current_frame = CTkFrame(self.selected_container, fg_color="transparent")
+                current_frame.pack(fill="x", pady=2)
+                current_width = 0
+            
+            tag_frame.pack(side="left", padx=3, pady=3)
+            
+            # Tag label
+            CTkLabel(
+                tag_frame, 
+                text=tech, 
+                text_color="white",
+                padx=8,
+                pady=2
+            ).pack(side="left")
+            
+            # Remove button
+            def make_remove_func(t):
+                return lambda: self.remove_tech(t)
+                
+            CTkButton(
+                tag_frame,
+                text="✕",
+                width=20,
+                height=20,
+                command=make_remove_func(tech),
+                fg_color="#3498db",
+                hover_color="#2980b9",
+                text_color="white",
+                corner_radius=10
+            ).pack(side="left")
+            
+            current_width += estimated_width
+    
+    def remove_tech(self, tech):
+        """Remove a technology from the selected list"""
+        if tech in self.selected_techs:
+            self.selected_techs.remove(tech)
+            self.show_category(self.current_category.get())
+            self.refresh_selected_techs()
+            self.callback(self.selected_techs)
+    
+    def set_items(self, items):
+        """Set the list of selected technologies"""
+        if items is None:
+            self.selected_techs = []
+        else:
+            try:
+                self.selected_techs = list(items)
+            except (TypeError, ValueError):
+                self.selected_techs = []
+                
+        self.show_category(self.current_category.get())
+        self.refresh_selected_techs()
+    
+    def reset(self):
+        """Clear all selections"""
+        self.selected_techs = []
+        self.show_category(self.current_category.get())
+        self.refresh_selected_techs()
+
+
 class ImageGallery(CTkFrame):
-    """A component for managing multiple images with URLs"""
+    """A component for managing project images with two specific screenshots"""
     
     def __init__(self, master, callback, initial_values=None):
         super().__init__(master)
@@ -115,10 +383,10 @@ class ImageGallery(CTkFrame):
         
         self.initial_values = initial_values or {
             "DemoGif": "",
-            "screenshots": []
+            "screenshot1": "",
+            "screenshot2": ""
         }
         
-        self.screenshots = self.initial_values["screenshots"].copy() if self.initial_values["screenshots"] else []
         self.create_widgets()
         
     def create_widgets(self):
@@ -148,109 +416,50 @@ class ImageGallery(CTkFrame):
         screenshot_frame.pack(fill="both", expand=True, pady=15)
         
         CTkLabel(screenshot_frame, text="Screenshots:", font=("Segoe UI", 12, "bold")).pack(anchor="w", pady=(0, 5))
-        CTkLabel(screenshot_frame, text="Add URLs to screenshots of your project (press Enter to add)").pack(anchor="w", pady=(0, 5))
+        CTkLabel(screenshot_frame, text="Add exactly two screenshot URLs for your project").pack(anchor="w", pady=(0, 5))
         
-        # Screenshots list frame
-        scroll_frame = CTkScrollableFrame(screenshot_frame, height=200)
-        scroll_frame.pack(fill="both", expand=True, pady=5)
+        # Screenshot 1
+        screenshot1_frame = CTkFrame(screenshot_frame, fg_color="transparent")
+        screenshot1_frame.pack(fill="x", pady=10)
         
-        self.screenshots_container = CTkFrame(scroll_frame, fg_color="transparent")
-        self.screenshots_container.pack(fill="both", expand=True)
+        CTkLabel(screenshot1_frame, text="Screenshot 1:").pack(side="left", padx=(0, 10))
         
-        # Add screenshot input
-        input_frame = CTkFrame(screenshot_frame, fg_color="transparent")
-        input_frame.pack(fill="x", pady=10)
+        self.screenshot1_var = tk.StringVar(value=self.initial_values.get("screenshot1", ""))
+        screenshot1_entry = CTkEntry(screenshot1_frame, textvariable=self.screenshot1_var, height=35)
+        screenshot1_entry.pack(side="left", fill="x", expand=True)
         
-        self.screenshot_var = tk.StringVar()
-        screenshot_entry = CTkEntry(
-            input_frame, 
-            textvariable=self.screenshot_var,
-            placeholder_text="Enter image URL and press Enter",
-            height=35
-        )
-        screenshot_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        # Update screenshot1 when focus leaves the field
+        screenshot1_entry.bind("<FocusOut>", lambda e: self.callback("screenshot1", self.screenshot1_var.get()))
         
-        add_btn = CTkButton(
-            input_frame,
-            text="Add Screenshot",
-            command=self.add_screenshot,
-            height=35
-        )
-        add_btn.pack(side="right")
+        # Screenshot 2
+        screenshot2_frame = CTkFrame(screenshot_frame, fg_color="transparent")
+        screenshot2_frame.pack(fill="x", pady=10)
         
-        # Enter key binding
-        screenshot_entry.bind("<Return>", lambda e: self.add_screenshot())
+        CTkLabel(screenshot2_frame, text="Screenshot 2:").pack(side="left", padx=(0, 10))
         
-        # Refresh screenshot list
-        self.refresh_screenshots()
+        self.screenshot2_var = tk.StringVar(value=self.initial_values.get("screenshot2", ""))
+        screenshot2_entry = CTkEntry(screenshot2_frame, textvariable=self.screenshot2_var, height=35)
+        screenshot2_entry.pack(side="left", fill="x", expand=True)
         
-    def add_screenshot(self):
-        """Add a new screenshot URL"""
-        url = self.screenshot_var.get().strip()
-        if url:
-            self.screenshots.append(url)
-            self.screenshot_var.set("")  # Clear input
-            self.refresh_screenshots()
-            self.callback("screenshots", self.screenshots)
-    
-    def remove_screenshot(self, index):
-        """Remove a screenshot at the specified index"""
-        if 0 <= index < len(self.screenshots):
-            del self.screenshots[index]
-            self.refresh_screenshots()
-            self.callback("screenshots", self.screenshots)
-    
-    def refresh_screenshots(self):
-        """Refresh the screenshots list display"""
-        # Clear existing items
-        for widget in self.screenshots_container.winfo_children():
-            widget.destroy()
-            
-        # Add each screenshot with delete button
-        for i, url in enumerate(self.screenshots):
-            item_frame = CTkFrame(self.screenshots_container)
-            item_frame.pack(fill="x", padx=5, pady=3)
-            
-            # Display URL (truncated if needed)
-            display_url = url
-            if len(url) > 50:
-                display_url = url[:47] + "..."
-                
-            CTkLabel(item_frame, text=display_url, anchor="w").pack(side="left", fill="x", expand=True, padx=5)
-            
-            # Create delete button
-            def make_remove_func(idx):
-                return lambda: self.remove_screenshot(idx)
-                
-            CTkButton(
-                item_frame,
-                text="✕",
-                width=30,
-                height=25,
-                command=make_remove_func(i),
-                fg_color="#e74c3c",
-                hover_color="#c0392b"
-            ).pack(side="right", padx=5)
-    
+        # Update screenshot2 when focus leaves the field
+        screenshot2_entry.bind("<FocusOut>", lambda e: self.callback("screenshot2", self.screenshot2_var.get()))
+        
     def set_values(self, values):
         """Set values for the image gallery"""
         if "DemoGif" in values:
             self.demo_var.set(values["DemoGif"])
             
-        if "screenshots" in values:
-            try:
-                self.screenshots = list(values["screenshots"])
-            except (TypeError, ValueError):
-                self.screenshots = []
-                
-            self.refresh_screenshots()
+        if "screenshot1" in values:
+            self.screenshot1_var.set(values["screenshot1"])
+            
+        if "screenshot2" in values:
+            self.screenshot2_var.set(values["screenshot2"])
     
     def reset(self):
         """Reset all fields"""
         self.demo_var.set("")
-        self.screenshots = []
-        self.screenshot_var.set("")
-        self.refresh_screenshots()
+        self.screenshot1_var.set("")
+        self.screenshot2_var.set("")
 
 
 class ListManager(CTkFrame):

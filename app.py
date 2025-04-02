@@ -21,16 +21,7 @@ except ImportError:
     from tkhtmlview import HTMLScrolledText
 
 from md_generator import MarkdownGenerator
-from ui_components import ListManager, EnvVarsManager, ImageGallery
-
-# Common technology options
-TECHNOLOGY_OPTIONS = [
-    "Python", "JavaScript", "TypeScript", "React", "Vue", "Angular", "Node", 
-    "Django", "Flask", "Express", "MongoDB", "MySQL", "PostgreSQL", "Redis",
-    "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Git", "GitHub", "GitLab",
-    "HTML", "CSS", "Sass", "TailwindCSS", "Bootstrap", "Material-UI", "Chakra-UI",
-    "Java", "C#", "C++", "Go", "Rust", "PHP", "Ruby", "Swift", "Kotlin"
-]
+from ui_components import ListManager, EnvVarsManager, ImageGallery, TechnologySelector
 
 # Common license options
 LICENSE_OPTIONS = [
@@ -57,13 +48,10 @@ class MDCreatorApp(CTk):
         
         # Setup variables
         self.markdown_generator = MarkdownGenerator()
-        self.update_pending = False
+        self.preview_generated = False
         
         # Create UI
         self.create_ui()
-        
-        # Initial update
-        self.after(100, self.update_preview)
         
     def create_ui(self):
         # Main container
@@ -269,17 +257,16 @@ class MDCreatorApp(CTk):
             callback=self.update_images,
             initial_values={
                 "DemoGif": self.markdown_generator.get_field("DemoGif") or "",
-                "screenshots": self.markdown_generator.get_field("screenshots") or []
+                "screenshot1": self.markdown_generator.get_field("screenshot1") or "",
+                "screenshot2": self.markdown_generator.get_field("screenshot2") or ""
             }
         )
         self.image_gallery.pack(fill="both", expand=True, padx=20, pady=20)
 
     def update_images(self, image_type, value):
         """Update image fields in the markdown generator"""
-        if image_type == "DemoGif":
-            self.update_field("DemoGif", value)
-        elif image_type == "screenshots":
-            self.update_field("screenshots", value)
+        if image_type in ["DemoGif", "screenshot1", "screenshot2"]:
+            self.update_field(image_type, value)
     
     def setup_prerequisites_tab(self):
         tab = self.tabview.tab("Prerequisites")
@@ -335,117 +322,15 @@ class MDCreatorApp(CTk):
         CTkLabel(content_frame, text="Technologies Used", font=("Segoe UI", 16, "bold")).pack(anchor="w", pady=(0, 15))
         
         # Instructions
-        CTkLabel(content_frame, text="Select from common options or add your own technologies.").pack(anchor="w", pady=(0, 10))
+        CTkLabel(content_frame, text="Click on technologies to add them to your project. Add custom ones below.").pack(anchor="w", pady=(0, 10))
         
-        # Common technology options
-        options_frame = CTkFrame(content_frame)
-        options_frame.pack(fill="x", pady=10)
-        
-        # The combo box for tech selection
-        CTkLabel(options_frame, text="Common Technologies:").pack(side="left", padx=(0, 10))
-        
-        self.tech_combo = CTkComboBox(
-            options_frame, 
-            values=TECHNOLOGY_OPTIONS,
-            width=200,
-            height=35
+        # Create the technology selector
+        self.tech_selector = TechnologySelector(
+            content_frame,
+            callback=lambda techs: self.update_field("tech", techs),
+            initial_items=self.markdown_generator.get_field("tech") or []
         )
-        self.tech_combo.pack(side="left", padx=(0, 10))
-        
-        add_selected_btn = CTkButton(
-            options_frame,
-            text="Add Selected",
-            command=self.add_selected_tech,
-            height=35
-        )
-        add_selected_btn.pack(side="left")
-        
-        # Custom tech entry
-        custom_frame = CTkFrame(content_frame)
-        custom_frame.pack(fill="x", pady=10)
-        
-        CTkLabel(custom_frame, text="Custom Technology:").pack(side="left", padx=(0, 10))
-        
-        self.custom_tech_var = tk.StringVar()
-        custom_tech_entry = CTkEntry(custom_frame, textvariable=self.custom_tech_var, width=200, height=35)
-        custom_tech_entry.pack(side="left", padx=(0, 10))
-        
-        add_custom_btn = CTkButton(
-            custom_frame,
-            text="Add Custom",
-            command=self.add_custom_tech,
-            height=35
-        )
-        add_custom_btn.pack(side="left")
-        
-        # Enter key binding
-        custom_tech_entry.bind("<Return>", lambda e: self.add_custom_tech())
-        
-        # List of added technologies
-        CTkLabel(content_frame, text="Technologies (click to remove):").pack(anchor="w", pady=(10, 5))
-        
-        list_frame = CTkScrollableFrame(content_frame, height=200)
-        list_frame.pack(fill="both", expand=True, pady=5)
-        
-        self.tech_container = CTkFrame(list_frame, fg_color="transparent")
-        self.tech_container.pack(fill="both", expand=True)
-        
-        # Load existing technologies
-        self.technologies = self.markdown_generator.get_field("tech") or []
-        self.refresh_tech_list()
-    
-    def add_selected_tech(self):
-        """Add the selected technology from the dropdown"""
-        tech = self.tech_combo.get()
-        if tech and tech not in self.technologies:
-            self.technologies.append(tech)
-            self.refresh_tech_list()
-            self.update_field("tech", self.technologies)
-    
-    def add_custom_tech(self):
-        """Add a custom technology"""
-        tech = self.custom_tech_var.get().strip()
-        if tech and tech not in self.technologies:
-            self.technologies.append(tech)
-            self.custom_tech_var.set("")  # Clear input
-            self.refresh_tech_list()
-            self.update_field("tech", self.technologies)
-    
-    def refresh_tech_list(self):
-        """Refresh the list of technologies"""
-        # Clear existing items
-        for widget in self.tech_container.winfo_children():
-            widget.destroy()
-            
-        # Create a grid of technology buttons
-        columns = 3
-        for i, tech in enumerate(self.technologies):
-            row, col = divmod(i, columns)
-            
-            # Create a clickable button that removes the tech when clicked
-            def make_remove_func(t):
-                return lambda: self.remove_tech(t)
-                
-            btn = CTkButton(
-                self.tech_container,
-                text=tech,
-                command=make_remove_func(tech),
-                fg_color="#3498db",
-                hover_color="#2980b9",
-                height=30
-            )
-            btn.grid(row=row, column=col, padx=5, pady=5, sticky="ew")
-            
-        # Make columns expandable
-        for col in range(columns):
-            self.tech_container.columnconfigure(col, weight=1)
-    
-    def remove_tech(self, tech):
-        """Remove a technology from the list"""
-        if tech in self.technologies:
-            self.technologies.remove(tech)
-            self.refresh_tech_list()
-            self.update_field("tech", self.technologies)
+        self.tech_selector.pack(fill="both", expand=True)
         
     def setup_additional_tab(self):
         tab = self.tabview.tab("Additional")
@@ -547,28 +432,72 @@ class MDCreatorApp(CTk):
         ).pack(side="left", padx=5)
         
     def setup_preview(self):
-        # Title
+        # Title section
+        title_frame = CTkFrame(self.preview_frame, fg_color="transparent")
+        title_frame.grid(row=0, column=0, sticky="ew", padx=15, pady=(0, 10))
+        title_frame.columnconfigure(1, weight=1)  # Make the spacer expand
+        
         CTkLabel(
-            self.preview_frame, 
+            title_frame, 
             text="Markdown Preview", 
             font=("Segoe UI", 18, "bold")
-        ).grid(row=0, column=0, sticky="w", padx=15, pady=(0, 10))
+        ).grid(row=0, column=0, sticky="w")
         
-        # Preview tabs frame
-        preview_tabs = CTkTabview(self.preview_frame)
-        preview_tabs.grid(row=1, column=0, sticky="nsew", padx=15, pady=5)
+        # Spacer to push buttons to the right
+        spacer = CTkFrame(title_frame, fg_color="transparent", width=10, height=10)
+        spacer.grid(row=0, column=1, sticky="ew")
+        
+        # Generate button - Improved styling
+        self.generate_btn = CTkButton(
+            title_frame, 
+            text="Generate Preview", 
+            command=self.generate_preview,
+            fg_color="#3a7ebf",
+            hover_color="#2a6da8",
+            height=35,
+            width=150,
+            corner_radius=8
+        )
+        self.generate_btn.grid(row=0, column=2, padx=(0, 5))
+        
+        # Content area with blank message
+        self.preview_content = CTkFrame(self.preview_frame)
+        self.preview_content.grid(row=1, column=0, sticky="nsew", padx=15, pady=5)
+        self.preview_content.grid_columnconfigure(0, weight=1)
+        self.preview_content.grid_rowconfigure(0, weight=1)
+        
+        # Initial message - Enhanced appearance
+        self.blank_message = CTkLabel(
+            self.preview_content,
+            text="Click 'Generate Preview' to see your README",
+            font=("Segoe UI", 16),
+            text_color=("gray60", "gray80")
+        )
+        self.blank_message.place(relx=0.5, rely=0.45, anchor="center")
+        
+        # Add an additional hint
+        self.blank_hint = CTkLabel(
+            self.preview_content,
+            text="This helps keep the app responsive by only generating the preview when needed",
+            font=("Segoe UI", 12),
+            text_color=("gray50", "gray70")
+        )
+        self.blank_hint.place(relx=0.5, rely=0.53, anchor="center")
+        
+        # Create preview tabs but don't display them yet
+        self.preview_tabs = CTkTabview(self.preview_content)
         
         # Create tabs
-        preview_tabs.add("HTML View")
-        preview_tabs.add("Source")
-        
-        # HTML preview
-        self.html_view = HTMLScrolledText(preview_tabs.tab("HTML View"), padx=10, pady=10)
-        self.html_view.pack(fill="both", expand=True)
+        self.preview_tabs.add("Source")
+        self.preview_tabs.add("HTML View")
         
         # Source preview
-        self.markdown_text = CTkTextbox(preview_tabs.tab("Source"), wrap="word")
+        self.markdown_text = CTkTextbox(self.preview_tabs.tab("Source"), wrap="word")
         self.markdown_text.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # HTML preview
+        self.html_view = HTMLScrolledText(self.preview_tabs.tab("HTML View"), padx=10, pady=10)
+        self.html_view.pack(fill="both", expand=True)
         
         # Action buttons
         actions_frame = CTkFrame(self.preview_frame)
@@ -601,28 +530,25 @@ class MDCreatorApp(CTk):
         CTkLabel(status_frame, textvariable=self.status_var).pack(side="left", padx=15)
         
     def update_field(self, field, value):
-        """Update a field in the markdown generator and refresh the preview"""
+        """Update a field in the markdown generator"""
         try:
-            self.status_var.set(f"Updating {field}...")
-            self.update_idletasks()
+            self.status_var.set(f"Updated {field}")
             
             # Update data
             self.markdown_generator.update_field(field, value)
             
-            # Schedule preview update if not already pending
-            if not self.update_pending:
-                self.update_pending = True
-                self.after(100, self.update_preview)
+            # Mark preview as outdated
+            if self.preview_generated:
+                self.generate_btn.configure(text="Preview Outdated - Click to Refresh")
+            
         except Exception as e:
             self.status_var.set(f"Error: {str(e)}")
-        
-    def update_preview(self):
-        """Generate and update the preview"""
+    
+    def generate_preview(self):
+        """Generate and display the preview when requested"""
         try:
-            # Reset the pending flag
-            self.update_pending = False
-            
-            # Update status
+            # Change button text while generating
+            self.generate_btn.configure(text="Generating...", state="disabled")
             self.status_var.set("Generating preview...")
             self.update_idletasks()
             
@@ -633,25 +559,27 @@ class MDCreatorApp(CTk):
             self.markdown_text.delete("0.0", "end")
             self.markdown_text.insert("0.0", markdown_content)
             
-            # Update HTML view - use after to avoid blocking UI
-            self.after(0, lambda: self.update_html_view(markdown_content))
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to update preview: {str(e)}")
-            self.status_var.set(f"Error: {str(e)}")
-    
-    def update_html_view(self, content):
-        """Update the HTML view separately to avoid blocking the UI"""
-        try:
             # Convert to HTML
-            html_content = markdown.markdown(content, extensions=['tables'])
+            html_content = markdown.markdown(markdown_content, extensions=['tables'])
             
             # Set HTML content
             self.html_view.set_html(html_content)
             
-            # Update status
+            # Show the tabs if not already shown
+            if not self.preview_generated:
+                self.blank_message.place_forget()  # Hide the blank message
+                self.blank_hint.place_forget()     # Hide the hint
+                self.preview_tabs.pack(fill="both", expand=True)
+                self.preview_generated = True
+            
+            # Reset button text and state
+            self.generate_btn.configure(text="Refresh Preview", state="normal")
             self.status_var.set("Preview updated")
+            
         except Exception as e:
-            self.status_var.set(f"HTML render error: {str(e)}")
+            messagebox.showerror("Error", f"Failed to generate preview: {str(e)}")
+            self.status_var.set(f"Error: {str(e)}")
+            self.generate_btn.configure(text="Try Again", state="normal")
             
     def new_project(self):
         """Create a new project"""
@@ -662,8 +590,14 @@ class MDCreatorApp(CTk):
             # Reset form fields
             self.reset_form()
             
-            # Update preview
-            self.update_preview()
+            # Hide preview and show blank message
+            if self.preview_generated:
+                self.preview_tabs.pack_forget()
+                self.blank_message.place(relx=0.5, rely=0.45, anchor="center")
+                self.blank_hint.place(relx=0.5, rely=0.53, anchor="center")
+                self.preview_generated = False
+                self.generate_btn.configure(text="Generate Preview")
+            
             self.status_var.set("New project created")
             
     def reset_form(self):
@@ -691,8 +625,7 @@ class MDCreatorApp(CTk):
         self.env_vars_manager.reset()
         
         # Reset technologies
-        self.technologies = []
-        self.refresh_tech_list()
+        self.tech_selector.reset()
         
     def save_template(self):
         """Save the current project as a template"""
@@ -744,8 +677,13 @@ class MDCreatorApp(CTk):
                 self.reset_form()
                 self.populate_form()
                 
-                # Update preview
-                self.update_preview()
+                # Hide preview and reset generated flag
+                if self.preview_generated:
+                    self.preview_tabs.pack_forget()
+                    self.blank_message.place(relx=0.5, rely=0.45, anchor="center")
+                    self.blank_hint.place(relx=0.5, rely=0.53, anchor="center")
+                    self.preview_generated = False
+                    self.generate_btn.configure(text="Generate Preview")
                 
                 messagebox.showinfo("Success", f"Template loaded from {file_path}")
                 self.status_var.set(f"Template loaded from {os.path.basename(file_path)}")
@@ -774,7 +712,8 @@ class MDCreatorApp(CTk):
         # Populate images
         self.image_gallery.set_values({
             "DemoGif": data.get("DemoGif", ""),
-            "screenshots": data.get("screenshots", [])
+            "screenshot1": data.get("screenshot1", ""),
+            "screenshot2": data.get("screenshot2", "")
         })
         
         # Populate additional info
@@ -786,12 +725,15 @@ class MDCreatorApp(CTk):
         self.env_vars_manager.set_items(data.get("envvars", []))
         
         # Populate technologies
-        self.technologies = data.get("tech", [])
-        self.refresh_tech_list()
+        self.tech_selector.set_items(data.get("tech", []))
         
     def save_markdown(self):
         """Save markdown content to a file"""
         from tkinter import filedialog
+        
+        # Generate preview first if not already done
+        if not self.preview_generated:
+            self.generate_preview()
         
         self.status_var.set("Saving markdown...")
         self.update_idletasks()
@@ -817,6 +759,10 @@ class MDCreatorApp(CTk):
                 
     def copy_to_clipboard(self):
         """Copy markdown content to clipboard"""
+        # Generate preview first if not already done
+        if not self.preview_generated:
+            self.generate_preview()
+            
         try:
             self.clipboard_clear()
             self.clipboard_append(self.markdown_text.get("0.0", "end"))
