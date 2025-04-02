@@ -10,18 +10,15 @@ import time
 try:
     from customtkinter import CTk, CTkFrame, CTkButton, CTkEntry, CTkLabel, CTkTextbox, CTkScrollableFrame
     from customtkinter import CTkTabview, CTkComboBox, CTkSwitch, CTkOptionMenu, set_appearance_mode, set_default_color_theme
-    import markdown
-    from tkhtmlview import HTMLScrolledText
 except ImportError:
     print("Installing required packages...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "customtkinter", "markdown", "tkhtmlview"])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "customtkinter"])
     from customtkinter import CTk, CTkFrame, CTkButton, CTkEntry, CTkLabel, CTkTextbox, CTkScrollableFrame
     from customtkinter import CTkTabview, CTkComboBox, CTkSwitch, CTkOptionMenu, set_appearance_mode, set_default_color_theme
-    import markdown
-    from tkhtmlview import HTMLScrolledText
 
 from md_generator import MarkdownGenerator
 from ui_components import ListManager, EnvVarsManager, ImageGallery, TechnologySelector
+from ui_components import TemplateSelector, FileStructureEditor, UsageCodeEditor
 
 # Common license options
 LICENSE_OPTIONS = [
@@ -35,7 +32,7 @@ class MDCreatorApp(CTk):
         
         # Configure window
         self.title("MD File Creator")
-        self.geometry("1280x720")
+        self.geometry("1100x800")
         self.minsize(1000, 600)
         
         # Set theme
@@ -48,7 +45,6 @@ class MDCreatorApp(CTk):
         
         # Setup variables
         self.markdown_generator = MarkdownGenerator()
-        self.preview_generated = False
         
         # Create UI
         self.create_ui()
@@ -58,27 +54,20 @@ class MDCreatorApp(CTk):
         self.main_frame = CTkFrame(self)
         self.main_frame.grid(row=0, column=0, sticky="nsew", padx=15, pady=15)
         self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_columnconfigure(1, weight=1)
         self.main_frame.grid_rowconfigure(0, weight=1)
         
-        # Left side (form)
+        # Form frame (covers the entire area now)
         self.form_frame = CTkFrame(self.main_frame)
-        self.form_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
-        
-        # Right side (preview)
-        self.preview_frame = CTkFrame(self.main_frame)
-        self.preview_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
-        self.preview_frame.grid_columnconfigure(0, weight=1)
-        self.preview_frame.grid_rowconfigure(1, weight=1)
+        self.form_frame.grid(row=0, column=0, sticky="nsew")
         
         # Setup tabs
         self.setup_tabs()
         
-        # Setup preview
-        self.setup_preview()
-        
         # Add status bar
         self.setup_status_bar()
+        
+        # Add action buttons at the bottom
+        self.setup_action_buttons()
         
     def setup_tabs(self):
         # Create tabview
@@ -90,9 +79,12 @@ class MDCreatorApp(CTk):
             "Basic Info", 
             "Features", 
             "Images", 
-            "Prerequisites", 
+            "Prerequisites",
+            "File Structure",
+            "Usage Code",
             "Environment", 
             "Technologies", 
+            "Template",
             "Additional"
         ]
         
@@ -104,8 +96,11 @@ class MDCreatorApp(CTk):
         self.setup_features_tab()
         self.setup_images_tab()
         self.setup_prerequisites_tab()
+        self.setup_file_structure_tab()
+        self.setup_usage_code_tab()
         self.setup_environment_tab()
         self.setup_technologies_tab()
+        self.setup_template_tab()
         self.setup_additional_tab()
         
     def setup_basic_tab(self):
@@ -289,6 +284,28 @@ class MDCreatorApp(CTk):
             initial_items=self.markdown_generator.get_field("Prerequisites")
         )
         self.prerequisites_manager.pack(fill="both", expand=True)
+    
+    def setup_file_structure_tab(self):
+        tab = self.tabview.tab("File Structure")
+        
+        # Create file structure editor
+        self.file_structure_editor = FileStructureEditor(
+            tab,
+            callback=lambda content: self.update_field("file_structure", content),
+            initial_content=self.markdown_generator.get_field("file_structure")
+        )
+        self.file_structure_editor.pack(fill="both", expand=True)
+        
+    def setup_usage_code_tab(self):
+        tab = self.tabview.tab("Usage Code")
+        
+        # Create usage code editor
+        self.usage_code_editor = UsageCodeEditor(
+            tab,
+            callback=lambda content: self.update_field("usage_code", content),
+            initial_content=self.markdown_generator.get_field("usage_code")
+        )
+        self.usage_code_editor.pack(fill="both", expand=True)
         
     def setup_environment_tab(self):
         tab = self.tabview.tab("Environment")
@@ -331,6 +348,17 @@ class MDCreatorApp(CTk):
             initial_items=self.markdown_generator.get_field("tech") or []
         )
         self.tech_selector.pack(fill="both", expand=True)
+    
+    def setup_template_tab(self):
+        tab = self.tabview.tab("Template")
+        
+        # Create template selector
+        self.template_selector = TemplateSelector(
+            tab,
+            callback=lambda template: self.update_field("template", template),
+            initial_template=self.markdown_generator.get_field("template") or "Standard"
+        )
+        self.template_selector.pack(fill="both", expand=True)
         
     def setup_additional_tab(self):
         tab = self.tabview.tab("Additional")
@@ -396,130 +424,6 @@ class MDCreatorApp(CTk):
             width=100,
             height=35
         ).pack(side="left", padx=5)
-        
-        # Actions section
-        actions_frame = CTkFrame(content_frame)
-        actions_frame.pack(fill="x", pady=20)
-        
-        CTkButton(
-            actions_frame, 
-            text="New Project", 
-            command=self.new_project,
-            width=120,
-            height=40,
-            fg_color="#e74c3c",
-            hover_color="#c0392b"
-        ).pack(side="left", padx=5)
-        
-        CTkButton(
-            actions_frame, 
-            text="Save Template", 
-            command=self.save_template,
-            width=120,
-            height=40,
-            fg_color="#2ecc71",
-            hover_color="#27ae60"
-        ).pack(side="left", padx=5)
-        
-        CTkButton(
-            actions_frame, 
-            text="Load Template", 
-            command=self.load_template,
-            width=120,
-            height=40,
-            fg_color="#3498db",
-            hover_color="#2980b9"
-        ).pack(side="left", padx=5)
-        
-    def setup_preview(self):
-        # Title section
-        title_frame = CTkFrame(self.preview_frame, fg_color="transparent")
-        title_frame.grid(row=0, column=0, sticky="ew", padx=15, pady=(0, 10))
-        title_frame.columnconfigure(1, weight=1)  # Make the spacer expand
-        
-        CTkLabel(
-            title_frame, 
-            text="Markdown Preview", 
-            font=("Segoe UI", 18, "bold")
-        ).grid(row=0, column=0, sticky="w")
-        
-        # Spacer to push buttons to the right
-        spacer = CTkFrame(title_frame, fg_color="transparent", width=10, height=10)
-        spacer.grid(row=0, column=1, sticky="ew")
-        
-        # Generate button - Improved styling
-        self.generate_btn = CTkButton(
-            title_frame, 
-            text="Generate Preview", 
-            command=self.generate_preview,
-            fg_color="#3a7ebf",
-            hover_color="#2a6da8",
-            height=35,
-            width=150,
-            corner_radius=8
-        )
-        self.generate_btn.grid(row=0, column=2, padx=(0, 5))
-        
-        # Content area with blank message
-        self.preview_content = CTkFrame(self.preview_frame)
-        self.preview_content.grid(row=1, column=0, sticky="nsew", padx=15, pady=5)
-        self.preview_content.grid_columnconfigure(0, weight=1)
-        self.preview_content.grid_rowconfigure(0, weight=1)
-        
-        # Initial message - Enhanced appearance
-        self.blank_message = CTkLabel(
-            self.preview_content,
-            text="Click 'Generate Preview' to see your README",
-            font=("Segoe UI", 16),
-            text_color=("gray60", "gray80")
-        )
-        self.blank_message.place(relx=0.5, rely=0.45, anchor="center")
-        
-        # Add an additional hint
-        self.blank_hint = CTkLabel(
-            self.preview_content,
-            text="This helps keep the app responsive by only generating the preview when needed",
-            font=("Segoe UI", 12),
-            text_color=("gray50", "gray70")
-        )
-        self.blank_hint.place(relx=0.5, rely=0.53, anchor="center")
-        
-        # Create preview tabs but don't display them yet
-        self.preview_tabs = CTkTabview(self.preview_content)
-        
-        # Create tabs
-        self.preview_tabs.add("Source")
-        self.preview_tabs.add("HTML View")
-        
-        # Source preview
-        self.markdown_text = CTkTextbox(self.preview_tabs.tab("Source"), wrap="word")
-        self.markdown_text.pack(fill="both", expand=True, padx=10, pady=10)
-        
-        # HTML preview
-        self.html_view = HTMLScrolledText(self.preview_tabs.tab("HTML View"), padx=10, pady=10)
-        self.html_view.pack(fill="both", expand=True)
-        
-        # Action buttons
-        actions_frame = CTkFrame(self.preview_frame)
-        actions_frame.grid(row=2, column=0, sticky="ew", padx=15, pady=15)
-        
-        CTkButton(
-            actions_frame, 
-            text="Save README.md", 
-            command=self.save_markdown,
-            fg_color="#28a745",
-            hover_color="#218838",
-            width=150,
-            height=40
-        ).pack(side="right", padx=5)
-        
-        CTkButton(
-            actions_frame, 
-            text="Copy to Clipboard", 
-            command=self.copy_to_clipboard,
-            width=150,
-            height=40
-        ).pack(side="right", padx=5)
     
     def setup_status_bar(self):
         # Create a status bar at the bottom
@@ -528,6 +432,67 @@ class MDCreatorApp(CTk):
         status_frame.grid(row=1, column=0, sticky="ew", padx=15, pady=(0, 15))
         
         CTkLabel(status_frame, textvariable=self.status_var).pack(side="left", padx=15)
+    
+    def setup_action_buttons(self):
+        """Add action buttons for global operations"""
+        actions_frame = CTkFrame(self.main_frame)
+        actions_frame.grid(row=1, column=0, sticky="ew", pady=(15, 0))
+        
+        # Left side buttons
+        left_frame = CTkFrame(actions_frame, fg_color="transparent")
+        left_frame.pack(side="left", fill="y", padx=20, pady=10)
+        
+        CTkButton(
+            left_frame, 
+            text="New Project", 
+            command=self.new_project,
+            width=120,
+            height=40,
+            fg_color="#e74c3c",
+            hover_color="#c0392b"
+        ).pack(side="left", padx=5)
+        
+        # Right side buttons
+        right_frame = CTkFrame(actions_frame, fg_color="transparent")
+        right_frame.pack(side="right", fill="y", padx=20, pady=10)
+        
+        CTkButton(
+            right_frame, 
+            text="Save README.md", 
+            command=self.save_markdown,
+            fg_color="#27ae60",
+            hover_color="#219653",
+            width=150,
+            height=40
+        ).pack(side="right", padx=5)
+        
+        CTkButton(
+            right_frame, 
+            text="Save Template", 
+            command=self.save_template,
+            fg_color="#2ecc71",
+            hover_color="#27ae60",
+            width=120,
+            height=40
+        ).pack(side="right", padx=5)
+        
+        CTkButton(
+            right_frame, 
+            text="Load Template", 
+            command=self.load_template,
+            fg_color="#3498db",
+            hover_color="#2980b9",
+            width=120,
+            height=40
+        ).pack(side="right", padx=5)
+        
+        CTkButton(
+            right_frame, 
+            text="Copy to Clipboard", 
+            command=self.copy_to_clipboard,
+            width=150,
+            height=40
+        ).pack(side="right", padx=5)
         
     def update_field(self, field, value):
         """Update a field in the markdown generator"""
@@ -536,51 +501,9 @@ class MDCreatorApp(CTk):
             
             # Update data
             self.markdown_generator.update_field(field, value)
-            
-            # Mark preview as outdated
-            if self.preview_generated:
-                self.generate_btn.configure(text="Preview Outdated - Click to Refresh")
-            
         except Exception as e:
             self.status_var.set(f"Error: {str(e)}")
     
-    def generate_preview(self):
-        """Generate and display the preview when requested"""
-        try:
-            # Change button text while generating
-            self.generate_btn.configure(text="Generating...", state="disabled")
-            self.status_var.set("Generating preview...")
-            self.update_idletasks()
-            
-            # Generate markdown
-            markdown_content = self.markdown_generator.generate_markdown()
-            
-            # Update markdown text view
-            self.markdown_text.delete("0.0", "end")
-            self.markdown_text.insert("0.0", markdown_content)
-            
-            # Convert to HTML
-            html_content = markdown.markdown(markdown_content, extensions=['tables'])
-            
-            # Set HTML content
-            self.html_view.set_html(html_content)
-            
-            # Show the tabs if not already shown
-            if not self.preview_generated:
-                self.blank_message.place_forget()  # Hide the blank message
-                self.blank_hint.place_forget()     # Hide the hint
-                self.preview_tabs.pack(fill="both", expand=True)
-                self.preview_generated = True
-            
-            # Reset button text and state
-            self.generate_btn.configure(text="Refresh Preview", state="normal")
-            self.status_var.set("Preview updated")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to generate preview: {str(e)}")
-            self.status_var.set(f"Error: {str(e)}")
-            self.generate_btn.configure(text="Try Again", state="normal")
-            
     def new_project(self):
         """Create a new project"""
         if messagebox.askyesno("New Project", "Are you sure you want to start a new project? All unsaved changes will be lost."):
@@ -589,14 +512,6 @@ class MDCreatorApp(CTk):
             
             # Reset form fields
             self.reset_form()
-            
-            # Hide preview and show blank message
-            if self.preview_generated:
-                self.preview_tabs.pack_forget()
-                self.blank_message.place(relx=0.5, rely=0.45, anchor="center")
-                self.blank_hint.place(relx=0.5, rely=0.53, anchor="center")
-                self.preview_generated = False
-                self.generate_btn.configure(text="Generate Preview")
             
             self.status_var.set("New project created")
             
@@ -626,6 +541,10 @@ class MDCreatorApp(CTk):
         
         # Reset technologies
         self.tech_selector.reset()
+        
+        # Reset editors
+        self.file_structure_editor.content_text.delete("0.0", "end")
+        self.usage_code_editor.content_text.delete("0.0", "end")
         
     def save_template(self):
         """Save the current project as a template"""
@@ -677,14 +596,6 @@ class MDCreatorApp(CTk):
                 self.reset_form()
                 self.populate_form()
                 
-                # Hide preview and reset generated flag
-                if self.preview_generated:
-                    self.preview_tabs.pack_forget()
-                    self.blank_message.place(relx=0.5, rely=0.45, anchor="center")
-                    self.blank_hint.place(relx=0.5, rely=0.53, anchor="center")
-                    self.preview_generated = False
-                    self.generate_btn.configure(text="Generate Preview")
-                
                 messagebox.showinfo("Success", f"Template loaded from {file_path}")
                 self.status_var.set(f"Template loaded from {os.path.basename(file_path)}")
             except Exception as e:
@@ -716,6 +627,13 @@ class MDCreatorApp(CTk):
             "screenshot2": data.get("screenshot2", "")
         })
         
+        # Populate file structure and usage code
+        self.file_structure_editor.content_text.delete("0.0", "end")
+        self.file_structure_editor.content_text.insert("0.0", data.get("file_structure", ""))
+        
+        self.usage_code_editor.content_text.delete("0.0", "end")
+        self.usage_code_editor.content_text.insert("0.0", data.get("usage_code", ""))
+        
         # Populate additional info
         self.license_var.set(data.get("license", "MIT"))
         self.contact_var.set(data.get("contact", ""))
@@ -731,41 +649,42 @@ class MDCreatorApp(CTk):
         """Save markdown content to a file"""
         from tkinter import filedialog
         
-        # Generate preview first if not already done
-        if not self.preview_generated:
-            self.generate_preview()
-        
-        self.status_var.set("Saving markdown...")
+        self.status_var.set("Generating markdown...")
         self.update_idletasks()
         
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".md",
-            filetypes=[("Markdown Files", "*.md"), ("All Files", "*.*")],
-            initialfile="README.md"
-        )
-        
-        if file_path:
-            try:
-                markdown_content = self.markdown_text.get("0.0", "end")
-                with open(file_path, "w", encoding="utf-8") as file:
-                    file.write(markdown_content)
-                messagebox.showinfo("Success", f"Markdown saved to {file_path}")
-                self.status_var.set(f"Markdown saved to {os.path.basename(file_path)}")
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to save file: {str(e)}")
-                self.status_var.set(f"Error saving markdown: {str(e)}")
-        else:
-            self.status_var.set("Markdown save cancelled")
+        try:
+            # Generate markdown from current data
+            markdown_content = self.markdown_generator.generate_markdown()
+            
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".md",
+                filetypes=[("Markdown Files", "*.md"), ("All Files", "*.*")],
+                initialfile="README.md"
+            )
+            
+            if file_path:
+                try:
+                    with open(file_path, "w", encoding="utf-8") as file:
+                        file.write(markdown_content)
+                    messagebox.showinfo("Success", f"Markdown saved to {file_path}")
+                    self.status_var.set(f"Markdown saved to {os.path.basename(file_path)}")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to save file: {str(e)}")
+                    self.status_var.set(f"Error saving markdown: {str(e)}")
+            else:
+                self.status_var.set("Markdown save cancelled")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to generate markdown: {str(e)}")
+            self.status_var.set(f"Error generating markdown: {str(e)}")
                 
     def copy_to_clipboard(self):
         """Copy markdown content to clipboard"""
-        # Generate preview first if not already done
-        if not self.preview_generated:
-            self.generate_preview()
-            
         try:
+            # Generate markdown from current data
+            markdown_content = self.markdown_generator.generate_markdown()
+            
             self.clipboard_clear()
-            self.clipboard_append(self.markdown_text.get("0.0", "end"))
+            self.clipboard_append(markdown_content)
             self.status_var.set("Markdown copied to clipboard")
             messagebox.showinfo("Success", "Markdown copied to clipboard")
         except Exception as e:

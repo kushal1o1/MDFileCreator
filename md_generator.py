@@ -1,5 +1,8 @@
 class MarkdownGenerator:
-    """A class to generate markdown README files"""
+    """A class to generate markdown README files with multiple design templates"""
+    
+    # Define available templates
+    TEMPLATES = ["Standard", "Minimalist", "Detailed", "Modern", "Corporate"]
     
     def __init__(self):
         """Initialize with default empty values"""
@@ -17,7 +20,10 @@ class MarkdownGenerator:
             "envvars": [],
             "tech": [],
             "license": "MIT",
-            "contact": ""
+            "contact": "",
+            "file_structure": "",
+            "usage_code": "",
+            "template": "Standard"
         }
     
     def update_field(self, field, value):
@@ -44,7 +50,23 @@ class MarkdownGenerator:
         self.__init__()
     
     def generate_markdown(self):
-        """Generate markdown from data exactly matching the user's format"""
+        """Generate markdown from data using the selected template"""
+        template = self.data.get("template", "Standard")
+        
+        if template == "Minimalist":
+            return self._generate_minimalist_template()
+        elif template == "Detailed":
+            return self._generate_detailed_template()
+        elif template == "Modern":
+            return self._generate_modern_template()
+        elif template == "Corporate":
+            return self._generate_corporate_template()
+        else:
+            # Default to Standard template
+            return self._generate_standard_template()
+    
+    def _generate_standard_template(self):
+        """Generate markdown with the standard template"""
         md = []
         
         # Project Title
@@ -176,9 +198,15 @@ class MarkdownGenerator:
         
         # Usage
         md.append("\n## Usage\n")
-        md.append("```javascript")
-        md.append("doSomething();")
-        md.append("```")
+        usage_code = self.data.get("usage_code", "").strip()
+        if usage_code:
+            md.append("```javascript")
+            md.append(usage_code)
+            md.append("```")
+        else:
+            md.append("```javascript")
+            md.append("doSomething();")
+            md.append("```")
         
         # Configuration
         md.append("\n## Configuration\n")
@@ -203,20 +231,26 @@ class MarkdownGenerator:
         
         # Directory Structure
         md.append("\n## Directory Structure\n")
-        md.append("```")
-        md.append("project-name/")
-        md.append("├── .github/           # GitHub specific files (workflows, templates)")
-        md.append("├── docs/              # Documentation files")
-        md.append("├── src/               # Source code")
-        md.append("│   ├── components/    # UI components (for frontend projects)")
-        md.append("│   ├── utils/         # Utility functions")
-        md.append("│   └── index.js       # Entry point")
-        md.append("├── tests/             # Test files")
-        md.append("├── .gitignore         # Git ignore file")
-        md.append("├── LICENSE            # License file")
-        md.append("├── package.json       # Project dependencies and scripts")
-        md.append("└── README.md          # Project documentation (this file)")
-        md.append("```")
+        file_structure = self.data.get("file_structure", "").strip()
+        if file_structure:
+            md.append("```")
+            md.append(file_structure)
+            md.append("```")
+        else:
+            md.append("```")
+            md.append("project-name/")
+            md.append("├── .github/           # GitHub specific files (workflows, templates)")
+            md.append("├── docs/              # Documentation files")
+            md.append("├── src/               # Source code")
+            md.append("│   ├── components/    # UI components (for frontend projects)")
+            md.append("│   ├── utils/         # Utility functions")
+            md.append("│   └── index.js       # Entry point")
+            md.append("├── tests/             # Test files")
+            md.append("├── .gitignore         # Git ignore file")
+            md.append("├── LICENSE            # License file")
+            md.append("├── package.json       # Project dependencies and scripts")
+            md.append("└── README.md          # Project documentation (this file)")
+            md.append("```")
         
         # Technologies
         tech = self.data.get("tech", [])
@@ -261,5 +295,467 @@ class MarkdownGenerator:
         md.append("<p align=\"center\">")
         md.append(f"  Made with ❤️ by <a href=\"https://github.com/{username}\">{username}</a>")
         md.append("</p>")
+        
+        return "\n".join(md)
+
+    def _generate_minimalist_template(self):
+        """Generate markdown with a minimalist template"""
+        md = []
+        
+        # Project Title
+        project_name = self.data.get("project_name", "").strip()
+        if project_name:
+            md.append(f"# {project_name}")
+        else:
+            md.append("# Project Title")
+        
+        # Concise description
+        concisedesc = self.data.get("concisedesc", "").strip()
+        if concisedesc:
+            md.append(f"\n> {concisedesc}")
+        
+        # Overview
+        overview = self.data.get("overview", "").strip()
+        if overview:
+            md.append(f"\n{overview}")
+        
+        # Demo
+        demo_gif = self.data.get("DemoGif", "").strip()
+        if demo_gif:
+            md.append(f"\n![Demo]({demo_gif})")
+        
+        # Features
+        features = self.data.get("features", [])
+        if features:
+            md.append("\n## Features")
+            for feature in features:
+                md.append(f"- {feature}")
+        
+        # Installation
+        md.append("\n## Installation")
+        username = self.data.get("username", "").strip() or "username"
+        
+        md.append("```bash")
+        if project_name:
+            md.append(f"git clone https://github.com/{username}/{project_name}.git")
+            md.append(f"cd {project_name}")
+        else:
+            md.append("git clone https://github.com/username/project.git")
+            md.append("cd project")
+        md.append("```")
+        
+        # Usage
+        md.append("\n## Usage")
+        usage_code = self.data.get("usage_code", "").strip()
+        if usage_code:
+            md.append("\n```")
+            md.append(usage_code)
+            md.append("```")
+        
+        # License
+        license_type = self.data.get("license", "MIT").strip()
+        md.append(f"\n## License\n{license_type}")
+        
+        return "\n".join(md)
+    
+    def _generate_modern_template(self):
+        """Generate markdown with a modern template"""
+        md = []
+        
+        # Header with logo and title
+        project_name = self.data.get("project_name", "").strip() or "Project Title"
+        logo = self.data.get("logo", "").strip()
+        
+        md.append("<div align=\"center\">")
+        
+        if logo:
+            md.append(f"\n  <img src=\"{logo}\" alt=\"logo\" width=\"200\" height=\"auto\" />")
+        
+        md.append(f"  <h1>{project_name}</h1>")
+        
+        # Badges
+        username = self.data.get("username", "").strip() or "username"
+        if project_name:
+            md.append("  <p>")
+            md.append(f"    <img src=\"https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge\" alt=\"version\" />")
+            md.append(f"    <img src=\"https://img.shields.io/github/license/{username}/{project_name}?style=for-the-badge\" alt=\"license\" />")
+            md.append("  </p>")
+        
+        # Concise description
+        concisedesc = self.data.get("concisedesc", "").strip()
+        if concisedesc:
+            md.append(f"\n  <p><em>{concisedesc}</em></p>")
+        
+        md.append("\n</div>")
+        
+        # Demo GIF
+        demo_gif = self.data.get("DemoGif", "").strip()
+        if demo_gif:
+            md.append("\n<div align=\"center\">")
+            md.append(f"  <img src=\"{demo_gif}\" alt=\"demo\" />")
+            md.append("</div>")
+        
+        # Overview
+        overview = self.data.get("overview", "").strip()
+        md.append("\n## 📋 Overview")
+        if overview:
+            md.append(f"\n{overview}")
+        
+        # Features
+        features = self.data.get("features", [])
+        md.append("\n## ✨ Features")
+        if features:
+            for feature in features:
+                md.append(f"\n- 🔸 **{feature}**")
+        
+        # Screenshots
+        screenshot1 = self.data.get("screenshot1", "").strip()
+        screenshot2 = self.data.get("screenshot2", "").strip()
+        
+        if screenshot1 or screenshot2:
+            md.append("\n## 📸 Screenshots")
+            
+            if screenshot1:
+                md.append(f"\n<img src=\"{screenshot1}\" alt=\"Screenshot 1\" width=\"400\" />")
+            
+            if screenshot2:
+                md.append(f"\n<img src=\"{screenshot2}\" alt=\"Screenshot 2\" width=\"400\" />")
+        
+        # Installation
+        md.append("\n## 🚀 Getting Started")
+        md.append("\n### Prerequisites")
+        prerequisites = self.data.get("Prerequisites", [])
+        if prerequisites:
+            for prerequisite in prerequisites:
+                md.append(f"- {prerequisite}")
+        
+        md.append("\n### Installation")
+        md.append("\n```bash")
+        if project_name:
+            md.append(f"git clone https://github.com/{username}/{project_name}.git")
+            md.append(f"cd {project_name}")
+        else:
+            md.append("git clone https://github.com/username/project.git")
+            md.append("cd project")
+        md.append("# Install dependencies")
+        md.append("npm install  # or yarn install")
+        md.append("```")
+        
+        # Usage
+        md.append("\n## 📖 Usage")
+        usage_code = self.data.get("usage_code", "").strip()
+        if usage_code:
+            md.append("\n```")
+            md.append(usage_code)
+            md.append("```")
+        
+        # Project Structure
+        file_structure = self.data.get("file_structure", "").strip()
+        if file_structure:
+            md.append("\n## 📁 Project Structure")
+            md.append("\n```")
+            md.append(file_structure)
+            md.append("```")
+        
+        # Environment Variables
+        env_vars = self.data.get("envvars", [])
+        if env_vars:
+            md.append("\n## ⚙️ Configuration")
+            md.append("\n### Environment Variables")
+            md.append("\n| Variable | Description | Default |")
+            md.append("|----------|-------------|---------|")
+            for envvar in env_vars:
+                md.append(f"| `{envvar['name']}` | {envvar['desc']} | `{envvar['value']}` |")
+        
+        # Technologies
+        tech = self.data.get("tech", [])
+        if tech:
+            md.append("\n## 🛠️ Technologies")
+            md.append("\n<div align=\"center\">")
+            
+            for technology in tech:
+                md.append(f"\n<img src=\"https://img.shields.io/badge/{technology}-%23007ACC.svg?style=for-the-badge&logo={technology}&logoColor=white\" alt=\"{technology}\" />")
+            
+            md.append("\n</div>")
+        
+        # License
+        license_type = self.data.get("license", "MIT").strip()
+        md.append(f"\n## 📝 License")
+        md.append(f"\nThis project is licensed under the {license_type} License.")
+        
+        # Contact
+        contact = self.data.get("contact", "").strip()
+        if contact:
+            md.append("\n## 📬 Contact")
+            md.append(f"\n{contact}")
+        
+        return "\n".join(md)
+    
+    def _generate_detailed_template(self):
+        """Generate markdown with a detailed template"""
+        md = []
+        
+        # Title and description
+        project_name = self.data.get("project_name", "").strip() or "Project Title"
+        md.append(f"# {project_name}")
+        
+        # Badges
+        username = self.data.get("username", "").strip() or "username"
+        if project_name:
+            md.append("\n[![License](https://img.shields.io/github/license/" + username + "/" + project_name + ")](https://github.com/" + username + "/" + project_name + "/blob/main/LICENSE)")
+            md.append("[![Issues](https://img.shields.io/github/issues/" + username + "/" + project_name + ")](https://github.com/" + username + "/" + project_name + "/issues)")
+            md.append("[![Pull Requests](https://img.shields.io/github/issues-pr/" + username + "/" + project_name + ")](https://github.com/" + username + "/" + project_name + "/pulls)")
+        
+        # Table of contents
+        md.append("\n## Table of Contents")
+        md.append("\n- [About](#about)")
+        md.append("- [Features](#features)")
+        md.append("- [Screenshots](#screenshots)")
+        md.append("- [Installation](#installation)")
+        md.append("- [Usage](#usage)")
+        md.append("- [Project Structure](#project-structure)")
+        md.append("- [Configuration](#configuration)")
+        md.append("- [Technologies](#technologies)")
+        md.append("- [License](#license)")
+        md.append("- [Contact](#contact)")
+        
+        # About section
+        md.append("\n## About")
+        concisedesc = self.data.get("concisedesc", "").strip()
+        if concisedesc:
+            md.append(f"\n**{concisedesc}**")
+        
+        overview = self.data.get("overview", "").strip()
+        if overview:
+            md.append(f"\n{overview}")
+        
+        # Demo
+        demo_gif = self.data.get("DemoGif", "").strip()
+        if demo_gif:
+            md.append(f"\n### Demo")
+            md.append(f"\n![Demo]({demo_gif})")
+        
+        # Features
+        features = self.data.get("features", [])
+        md.append("\n## Features")
+        if features:
+            for feature in features:
+                md.append(f"\n### {feature}")
+                md.append("\nDetailed description of this feature would go here.")
+                
+        # Screenshots
+        screenshot1 = self.data.get("screenshot1", "").strip()
+        screenshot2 = self.data.get("screenshot2", "").strip()
+        
+        if screenshot1 or screenshot2:
+            md.append("\n## Screenshots")
+            
+            if screenshot1:
+                md.append(f"\n### Screenshot 1")
+                md.append(f"\n![Screenshot 1]({screenshot1})")
+                md.append("\nDescription of what the screenshot shows.")
+            
+            if screenshot2:
+                md.append(f"\n### Screenshot 2")
+                md.append(f"\n![Screenshot 2]({screenshot2})")
+                md.append("\nDescription of what the screenshot shows.")
+        
+        # Installation
+        md.append("\n## Installation")
+        
+        md.append("\n### Prerequisites")
+        prerequisites = self.data.get("Prerequisites", [])
+        if prerequisites:
+            for prerequisite in prerequisites:
+                md.append(f"- {prerequisite}")
+        else:
+            md.append("- List prerequisite 1")
+            md.append("- List prerequisite 2")
+        
+        md.append("\n### Step-by-step installation")
+        md.append("\n```bash")
+        if project_name:
+            md.append(f"# Clone the repository")
+            md.append(f"git clone https://github.com/{username}/{project_name}.git")
+            md.append(f"")
+            md.append(f"# Navigate to the project directory")
+            md.append(f"cd {project_name}")
+        else:
+            md.append("# Clone the repository")
+            md.append("git clone https://github.com/username/project.git")
+            md.append("")
+            md.append("# Navigate to the project directory")
+            md.append("cd project")
+        
+        md.append("")
+        md.append("# Install dependencies")
+        md.append("npm install")
+        md.append("# or")
+        md.append("yarn install")
+        md.append("```")
+        
+        # Usage
+        md.append("\n## Usage")
+        usage_code = self.data.get("usage_code", "").strip()
+        if usage_code:
+            md.append("\n```")
+            md.append(usage_code)
+            md.append("```")
+        
+        # Project structure
+        file_structure = self.data.get("file_structure", "").strip()
+        md.append("\n## Project Structure")
+        if file_structure:
+            md.append("\n```")
+            md.append(file_structure)
+            md.append("```")
+        else:
+            md.append("\nThe project structure would be described here.")
+        
+        # Configuration
+        md.append("\n## Configuration")
+        
+        # Environment Variables
+        env_vars = self.data.get("envvars", [])
+        md.append("\n### Environment Variables")
+        if env_vars:
+            md.append("\n| Variable | Description | Default | Required |")
+            md.append("|----------|-------------|---------|----------|")
+            for envvar in env_vars:
+                md.append(f"| `{envvar['name']}` | {envvar['desc']} | `{envvar['value']}` | Yes/No |")
+        else:
+            md.append("\nList of environment variables would go here.")
+        
+        # Technologies
+        tech = self.data.get("tech", [])
+        md.append("\n## Technologies")
+        if tech:
+            for technology in tech:
+                md.append(f"\n- **{technology}**: Description of how {technology} is used in the project.")
+        
+        # License
+        license_type = self.data.get("license", "MIT").strip()
+        md.append(f"\n## License")
+        md.append(f"\nThis project is licensed under the {license_type} License - see the [LICENSE](LICENSE) file for details.")
+        
+        # Contact
+        contact = self.data.get("contact", "").strip()
+        md.append("\n## Contact")
+        if contact:
+            md.append(f"\n{contact}")
+        else:
+            md.append("\nProvide your contact information here.")
+        
+        return "\n".join(md)
+    
+    def _generate_corporate_template(self):
+        """Generate markdown with a corporate template"""
+        md = []
+        
+        # Header
+        project_name = self.data.get("project_name", "").strip() or "Project Title"
+        md.append(f"# {project_name}")
+        md.append("\n---")
+        
+        # Executive Summary
+        concisedesc = self.data.get("concisedesc", "").strip()
+        if concisedesc:
+            md.append(f"\n## Executive Summary")
+            md.append(f"\n{concisedesc}")
+        
+        # Overview
+        overview = self.data.get("overview", "").strip()
+        if overview:
+            md.append(f"\n## Business Overview")
+            md.append(f"\n{overview}")
+        
+        # Value Proposition / Features
+        features = self.data.get("features", [])
+        md.append("\n## Product Capabilities")
+        if features:
+            for i, feature in enumerate(features, 1):
+                md.append(f"\n### {i}. {feature}")
+        
+        # Screenshots
+        screenshot1 = self.data.get("screenshot1", "").strip()
+        screenshot2 = self.data.get("screenshot2", "").strip()
+        
+        if screenshot1 or screenshot2:
+            md.append("\n## Product Screenshots")
+            
+            if screenshot1:
+                md.append(f"\n![{project_name} Interface]({screenshot1})")
+            
+            if screenshot2:
+                md.append(f"\n![{project_name} Dashboard]({screenshot2})")
+        
+        # Technical Implementation
+        md.append("\n## Technical Implementation")
+        
+        tech = self.data.get("tech", [])
+        if tech:
+            md.append("\n### Technologies Utilized")
+            md.append("\n| Technology | Purpose |")
+            md.append("|------------|---------|")
+            for technology in tech:
+                md.append(f"| {technology} | Primary functionality for {technology} |")
+        
+        # Project Structure
+        file_structure = self.data.get("file_structure", "").strip()
+        if file_structure:
+            md.append("\n### Solution Architecture")
+            md.append("\n```")
+            md.append(file_structure)
+            md.append("```")
+        
+        # Implementation
+        md.append("\n## Implementation Guide")
+        
+        # Installation
+        md.append("\n### Deployment Procedure")
+        md.append("\n```bash")
+        username = self.data.get("username", "").strip() or "organization"
+        if project_name:
+            md.append(f"git clone https://github.com/{username}/{project_name}.git")
+            md.append(f"cd {project_name}")
+        else:
+            md.append("git clone https://github.com/organization/project.git")
+            md.append("cd project")
+        md.append("# Installation steps")
+        md.append("```")
+        
+        # Usage
+        md.append("\n### Operation Instructions")
+        usage_code = self.data.get("usage_code", "").strip()
+        if usage_code:
+            md.append("\n```")
+            md.append(usage_code)
+            md.append("```")
+        
+        # Configuration
+        env_vars = self.data.get("envvars", [])
+        if env_vars:
+            md.append("\n### Configuration Parameters")
+            md.append("\n| Parameter | Description | Default Value |")
+            md.append("|-----------|-------------|---------------|")
+            for envvar in env_vars:
+                md.append(f"| {envvar['name']} | {envvar['desc']} | {envvar['value']} |")
+        
+        # License
+        license_type = self.data.get("license", "Commercial").strip()
+        md.append(f"\n## Licensing Information")
+        md.append(f"\nThis software is provided under {license_type} license agreement.")
+        
+        # Contact
+        contact = self.data.get("contact", "").strip()
+        md.append("\n## Support Contact")
+        if contact:
+            md.append(f"\n{contact}")
+        else:
+            md.append("\nFor technical support, please contact our support team.")
+        
+        # Footer
+        md.append("\n---")
+        md.append("\n*This document is confidential and proprietary.*")
         
         return "\n".join(md) 

@@ -42,6 +42,433 @@ TECH_CATEGORIES = {
 }
 
 
+class TemplateSelector(CTkFrame):
+    """A component for selecting the README template"""
+    
+    def __init__(self, master, callback, initial_template="Standard"):
+        super().__init__(master)
+        self.callback = callback
+        self.initial_template = initial_template
+        
+        self.create_widgets()
+        
+    def create_widgets(self):
+        # Create container frame with padding
+        container = CTkFrame(self, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Section title
+        CTkLabel(container, text="README Template Selection", font=("Segoe UI", 16, "bold")).pack(anchor="w", pady=(0, 15))
+        
+        # Description
+        CTkLabel(container, text="Choose a template style for your README:").pack(anchor="w", pady=(0, 10))
+        
+        # Templates frame
+        templates_frame = CTkScrollableFrame(container, height=350)
+        templates_frame.pack(fill="both", expand=True, pady=10)
+        
+        # Template cards
+        self.create_template_card(templates_frame, "Standard", 
+            "The classic GitHub README with all standard sections, badges, and navigation links.",
+            "Most widely used format, comprehensive documentation."
+        )
+        
+        self.create_template_card(templates_frame, "Minimalist", 
+            "A clean, minimal README with only essential information.",
+            "For simple projects or when brevity is valued."
+        )
+        
+        self.create_template_card(templates_frame, "Modern", 
+            "A visually appealing README with emojis and modern styling.",
+            "Stands out with emoji icons and centered content blocks."
+        )
+        
+        self.create_template_card(templates_frame, "Detailed", 
+            "An extensive README with detailed sections and hierarchical structure.",
+            "Great for complex projects needing thorough documentation."
+        )
+        
+        self.create_template_card(templates_frame, "Corporate", 
+            "A professional README aimed at business and enterprise projects.",
+            "Formal language, executive summary, business-focused sections."
+        )
+    
+    def create_template_card(self, parent, template_name, description, benefits):
+        """Create a card for each template option"""
+        # Card frame
+        card = CTkFrame(parent)
+        card.pack(fill="x", padx=10, pady=10)
+        
+        # Left side (info)
+        info_frame = CTkFrame(card, fg_color="transparent")
+        info_frame.pack(side="left", fill="both", expand=True, padx=15, pady=15)
+        
+        # Template name
+        CTkLabel(info_frame, text=template_name, font=("Segoe UI", 14, "bold")).pack(anchor="w")
+        
+        # Description
+        CTkLabel(info_frame, text=description, wraplength=400, justify="left").pack(anchor="w", pady=5)
+        
+        # Benefits
+        CTkLabel(info_frame, text=f"Benefits: {benefits}", wraplength=400, justify="left", text_color="gray60").pack(anchor="w", pady=5)
+        
+        # Right side (select button)
+        button_frame = CTkFrame(card, fg_color="transparent")
+        button_frame.pack(side="right", fill="y", padx=15, pady=15)
+        
+        # Select button
+        select_btn = CTkButton(
+            button_frame,
+            text="Select",
+            command=lambda t=template_name: self.select_template(t),
+            width=100,
+            height=35,
+            fg_color="#3a7ebf" if template_name == self.initial_template else "gray30",
+            hover_color="#2a6da8"
+        )
+        select_btn.pack(pady=10)
+        
+        # Store the button reference for updating selected state
+        if not hasattr(self, "template_buttons"):
+            self.template_buttons = {}
+        self.template_buttons[template_name] = select_btn
+    
+    def select_template(self, template_name):
+        """Select a template and update the UI"""
+        # Update button colors
+        for name, button in self.template_buttons.items():
+            if name == template_name:
+                button.configure(fg_color="#3a7ebf", hover_color="#2a6da8")
+            else:
+                button.configure(fg_color="gray30", hover_color="gray40")
+        
+        # Notify about template change
+        self.callback(template_name)
+
+class FileStructureEditor(CTkFrame):
+    """A component for editing the file structure of a project"""
+    
+    def __init__(self, master, callback, initial_content=""):
+        super().__init__(master)
+        self.callback = callback
+        self.initial_content = initial_content
+        
+        self.create_widgets()
+        
+    def create_widgets(self):
+        # Create container frame with padding
+        container = CTkFrame(self, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Section title
+        CTkLabel(container, text="File Structure", font=("Segoe UI", 16, "bold")).pack(anchor="w", pady=(0, 15))
+        
+        # Description
+        CTkLabel(container, text="Enter the file structure of your project (use ASCII tree format):").pack(anchor="w", pady=(0, 10))
+        
+        # Example section
+        example_frame = CTkFrame(container, fg_color=("gray90", "gray20"))
+        example_frame.pack(fill="x", pady=10)
+        
+        CTkLabel(example_frame, text="Example:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(10, 5))
+        
+        example_text = """project-name/
+├── src/               # Source code
+│   ├── components/    # UI components
+│   └── utils/         # Utility functions
+├── docs/              # Documentation
+└── README.md          # This file"""
+        
+        CTkLabel(example_frame, text=example_text, font=("Courier", 12), justify="left").pack(anchor="w", padx=15, pady=(0, 10))
+        
+        # Textbox for content
+        self.content_text = CTkTextbox(container, width=500, height=300, font=("Courier", 12))
+        self.content_text.pack(fill="both", expand=True, pady=10)
+        
+        # Set initial content
+        if self.initial_content:
+            self.content_text.insert("0.0", self.initial_content)
+        
+        # Update button
+        update_btn = CTkButton(
+            container,
+            text="Update File Structure",
+            command=self.update_content,
+            height=35,
+            fg_color="#3a7ebf",
+            hover_color="#2a6da8"
+        )
+        update_btn.pack(anchor="e", pady=10)
+        
+        # Buttons for common templates
+        templates_frame = CTkFrame(container, fg_color="transparent")
+        templates_frame.pack(fill="x", pady=10)
+        
+        CTkLabel(templates_frame, text="Common Templates:").pack(side="left", padx=(0, 10))
+        
+        # Template buttons
+        CTkButton(
+            templates_frame,
+            text="Web App",
+            command=lambda: self.load_template("web"),
+            width=100,
+            height=30
+        ).pack(side="left", padx=5)
+        
+        CTkButton(
+            templates_frame,
+            text="Python Package",
+            command=lambda: self.load_template("python"),
+            width=120,
+            height=30
+        ).pack(side="left", padx=5)
+        
+        CTkButton(
+            templates_frame,
+            text="Node.js App",
+            command=lambda: self.load_template("node"),
+            width=100,
+            height=30
+        ).pack(side="left", padx=5)
+        
+        CTkButton(
+            templates_frame,
+            text="Clear",
+            command=lambda: self.content_text.delete("0.0", "end"),
+            width=80,
+            height=30,
+            fg_color="#e74c3c",
+            hover_color="#c0392b"
+        ).pack(side="right", padx=5)
+    
+    def update_content(self):
+        """Update the file structure content"""
+        content = self.content_text.get("0.0", "end").strip()
+        self.callback(content)
+    
+    def load_template(self, template_type):
+        """Load a predefined template"""
+        templates = {
+            "web": """webapp/
+├── public/              # Static files
+│   ├── index.html       # Entry HTML file
+│   ├── favicon.ico      # Favicon
+│   └── assets/          # Static assets
+│       └── images/      # Image files
+├── src/                 # Source code
+│   ├── components/      # UI components
+│   ├── pages/           # Page components
+│   ├── services/        # API services
+│   ├── utils/           # Utility functions
+│   ├── styles/          # CSS/SCSS files
+│   ├── App.js           # Main App component
+│   └── index.js         # Entry point
+├── .gitignore           # Git ignore file
+├── package.json         # Dependency management
+├── README.md            # Documentation
+└── LICENSE              # License file""",
+            
+            "python": """python-package/
+├── packagename/         # Main package
+│   ├── __init__.py      # Package initialization
+│   ├── core.py          # Core functionality
+│   ├── utils.py         # Utility functions
+│   └── data/            # Data files
+├── tests/               # Test files
+│   ├── __init__.py      # Test package initialization
+│   └── test_core.py     # Tests for core.py
+├── docs/                # Documentation
+│   └── index.md         # Main documentation
+├── .gitignore           # Git ignore file
+├── setup.py             # Package setup file
+├── requirements.txt     # Development dependencies
+├── README.md            # Documentation
+└── LICENSE              # License file""",
+            
+            "node": """node-app/
+├── src/                 # Source code
+│   ├── controllers/     # Route controllers
+│   ├── models/          # Data models
+│   ├── middleware/      # Middleware functions
+│   ├── routes/          # API routes
+│   ├── utils/           # Utility functions
+│   ├── config/          # Configuration
+│   └── app.js           # Main application
+├── tests/               # Test files
+├── .env                 # Environment variables
+├── .gitignore           # Git ignore file
+├── package.json         # Dependency management
+├── README.md            # Documentation
+└── LICENSE              # License file"""
+        }
+        
+        # Clear existing content and insert template
+        self.content_text.delete("0.0", "end")
+        self.content_text.insert("0.0", templates.get(template_type, ""))
+
+class UsageCodeEditor(CTkFrame):
+    """A component for editing usage code examples"""
+    
+    def __init__(self, master, callback, initial_content=""):
+        super().__init__(master)
+        self.callback = callback
+        self.initial_content = initial_content
+        
+        self.create_widgets()
+        
+    def create_widgets(self):
+        # Create container frame with padding
+        container = CTkFrame(self, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Section title
+        CTkLabel(container, text="Usage Code Examples", font=("Segoe UI", 16, "bold")).pack(anchor="w", pady=(0, 15))
+        
+        # Description
+        CTkLabel(container, text="Enter code examples showing how to use your project:").pack(anchor="w", pady=(0, 10))
+        
+        # Language selector
+        language_frame = CTkFrame(container, fg_color="transparent")
+        language_frame.pack(fill="x", pady=10)
+        
+        CTkLabel(language_frame, text="Language:").pack(side="left", padx=(0, 10))
+        
+        languages = ["javascript", "python", "java", "csharp", "cpp", "bash", "html", "css", "json", "yaml"]
+        
+        self.language_var = tk.StringVar(value="javascript")
+        language_dropdown = CTkComboBox(
+            language_frame,
+            values=languages,
+            variable=self.language_var,
+            width=150
+        )
+        language_dropdown.pack(side="left")
+        
+        # Textbox for content
+        self.content_text = CTkTextbox(container, width=500, height=200, font=("Courier", 12))
+        self.content_text.pack(fill="both", expand=True, pady=10)
+        
+        # Set initial content
+        if self.initial_content:
+            self.content_text.insert("0.0", self.initial_content)
+        
+        # Update button
+        update_btn = CTkButton(
+            container,
+            text="Update Usage Examples",
+            command=self.update_content,
+            height=35,
+            fg_color="#3a7ebf",
+            hover_color="#2a6da8"
+        )
+        update_btn.pack(anchor="e", pady=10)
+        
+        # Template buttons frame
+        templates_frame = CTkFrame(container, fg_color="transparent")
+        templates_frame.pack(fill="x", pady=10)
+        
+        CTkLabel(templates_frame, text="Examples:").pack(side="left", padx=(0, 10))
+        
+        # Template buttons by language
+        CTkButton(
+            templates_frame,
+            text="JavaScript",
+            command=lambda: self.load_example("javascript"),
+            width=100,
+            height=30
+        ).pack(side="left", padx=5)
+        
+        CTkButton(
+            templates_frame,
+            text="Python",
+            command=lambda: self.load_example("python"),
+            width=100,
+            height=30
+        ).pack(side="left", padx=5)
+        
+        CTkButton(
+            templates_frame,
+            text="CLI",
+            command=lambda: self.load_example("bash"),
+            width=100,
+            height=30
+        ).pack(side="left", padx=5)
+        
+        CTkButton(
+            templates_frame,
+            text="Clear",
+            command=lambda: self.content_text.delete("0.0", "end"),
+            width=80,
+            height=30,
+            fg_color="#e74c3c",
+            hover_color="#c0392b"
+        ).pack(side="right", padx=5)
+    
+    def update_content(self):
+        """Update the usage code content"""
+        content = self.content_text.get("0.0", "end").strip()
+        self.callback(content)
+    
+    def load_example(self, language):
+        """Load a predefined example for the selected language"""
+        examples = {
+            "javascript": """// Import the module
+import { MyComponent } from 'my-library';
+
+// Initialize
+const instance = new MyComponent({
+  name: 'Example',
+  options: {
+    debug: true,
+    timeout: 1000
+  }
+});
+
+// Use the functionality
+instance.doSomething();
+const result = instance.processData([1, 2, 3]);
+console.log(result);""",
+            
+            "python": """# Import the module
+from my_package import MyClass
+
+# Initialize 
+instance = MyClass(
+    name="Example", 
+    debug=True,
+    config_path="./config.json"
+)
+
+# Use the functionality
+instance.do_something()
+results = instance.process_data([1, 2, 3])
+print(results)""",
+            
+            "bash": """#!/bin/bash
+# Clone the repository
+git clone https://github.com/username/project.git
+
+# Navigate to the project directory
+cd project
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm start
+
+# Build for production
+npm run build"""
+        }
+        
+        # Update language dropdown
+        if language in self.language_var._values:
+            self.language_var.set(language)
+        
+        # Clear existing content and insert example
+        self.content_text.delete("0.0", "end")
+        self.content_text.insert("0.0", examples.get(language, ""))
+
 class FeaturesList(CTkFrame):
     """A component for managing a list of features"""
     
