@@ -686,6 +686,40 @@ class MDCreatorApp(CTk):
         input_container = CTkFrame(input_section, fg_color="transparent")
         input_container.pack(fill="both", expand=True, padx=25, pady=25)
         
+        # README Style Selection
+        style_frame = CTkFrame(input_container, fg_color="transparent")
+        style_frame.pack(fill="x", pady=(0, 20))
+        
+        style_left = CTkFrame(style_frame, fg_color="transparent")
+        style_left.pack(side="left", fill="x", expand=True)
+        
+        CTkLabel(
+            style_left, 
+            text="🎨 README Style", 
+            font=("Segoe UI", 16, "bold")
+        ).pack(anchor="w")
+        
+        # Style selector
+        readme_styles = [
+            "🔥 Modern & Trendy",
+            "📊 Professional & Corporate", 
+            "🚀 Developer Focused",
+            "📝 Simple & Clean",
+            "🎯 Detailed & Comprehensive",
+            "🤖 Let AI Choose Best Style"
+        ]
+        
+        self.readme_style_var = tk.StringVar(value="🤖 Let AI Choose Best Style")
+        style_dropdown = CTkComboBox(
+            style_frame,
+            values=readme_styles,
+            variable=self.readme_style_var,
+            width=250,
+            height=35,
+            font=("Segoe UI", 12)
+        )
+        style_dropdown.pack(side="right")
+        
         # URL input with label and help text
         url_label_frame = CTkFrame(input_container, fg_color="transparent")
         url_label_frame.pack(fill="x", pady=(0, 8))
@@ -995,8 +1029,9 @@ class MDCreatorApp(CTk):
         self.generated_readme_content = ""
         self.generated_readme_metadata = {}
         
-        # Start AI generation
-        self.ai_integration.generate_readme_async(github_url)
+        # Start AI generation with selected style
+        selected_style = self.readme_style_var.get()
+        self.ai_integration.generate_readme_async(github_url, selected_style)
     
     def update_ai_progress(self, message):
         """Update progress message and step indicators"""

@@ -11,7 +11,7 @@ from typing import Callable, Optional, Dict, Any
 from dotenv import load_dotenv
 
 try:
-    from ai_generator import AIGenerator
+    from smart_ai_generator import SmartAIGenerator
     from github_collector import GitHubCollector
     AI_GENERATOR_AVAILABLE = True
 except ImportError as e:
@@ -47,7 +47,7 @@ class AIIntegration:
         if not github_token:
             print("⚠️  Warning: GITHUB_TOKEN not found in environment (API rate limits will apply)")
         
-    def generate_readme_async(self, github_url: str) -> None:
+    def generate_readme_async(self, github_url: str, style: str = "🤖 Let AI Choose Best Style") -> None:
         """
         Generate README asynchronously (for GUI integration)
         """
@@ -74,8 +74,8 @@ class AIIntegration:
                 self._send_progress("Initializing GitHub collector...")
                 collector = GitHubCollector()
                 
-                self._send_progress("Initializing AI generator...")
-                generator = AIGenerator()
+                self._send_progress("Initializing Smart AI generator...")
+                generator = SmartAIGenerator()
                 
                 self._send_progress("Collecting comprehensive GitHub data...")
                 
@@ -96,10 +96,11 @@ class AIIntegration:
                     with open(temp_data_file, 'w', encoding='utf-8') as f:
                         json.dump(github_data, f, indent=2, default=str)
                     
-                    # Generate README using the comprehensive data
-                    readme_content = generator.generate_professional_readme(
+                    # Generate README using the comprehensive data with selected style
+                    readme_content = generator.generate_smart_readme(
                         github_url=github_url,
-                        data_file=temp_data_file
+                        data_file=temp_data_file,
+                        style=style
                     )
                     
                     if not readme_content or not isinstance(readme_content, str):
@@ -152,7 +153,7 @@ class AIIntegration:
         thread.daemon = True
         thread.start()
     
-    def generate_readme_sync(self, github_url: str) -> Dict[str, Any]:
+    def generate_readme_sync(self, github_url: str, style: str = "🤖 Let AI Choose Best Style") -> Dict[str, Any]:
         """
         Generate README synchronously (for testing)
         """
@@ -173,7 +174,7 @@ class AIIntegration:
             
             # Create enhanced GitHub collector and AI generator
             collector = GitHubCollector()
-            generator = AIGenerator()
+            generator = SmartAIGenerator()
             
             # Collect comprehensive GitHub data
             github_data = collector.collect_comprehensive_data(github_url)
@@ -198,10 +199,11 @@ class AIIntegration:
                 with open(temp_data_file, 'w', encoding='utf-8') as f:
                     json.dump(github_data, f, indent=2, default=str)
                 
-                # Generate README using the comprehensive data
-                readme_content = generator.generate_professional_readme(
+                # Generate README using the comprehensive data with selected style
+                readme_content = generator.generate_smart_readme(
                     github_url=github_url,
-                    data_file=temp_data_file
+                    data_file=temp_data_file,
+                    style=style
                 )
                 
                 if not readme_content or not isinstance(readme_content, str):

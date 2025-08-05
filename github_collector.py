@@ -84,19 +84,14 @@ class GitHubCollector:
                 'collection_timestamp': datetime.now().isoformat()
             }
             
-            # Collect all data sections with error handling
+            # Collect ONLY essential data for AI README generation
             data_sections = [
                 ('basic_info', self._get_basic_info),
-                ('contents', self._get_repository_contents),
+                ('file_structure', self._get_repository_contents),
                 ('languages', self._get_languages),
-                ('recent_commits', self._get_recent_commits),
-                ('issues', self._get_issues),
-                ('pull_requests', self._get_pull_requests),
-                ('contributors', self._get_contributors),
-                ('releases', self._get_releases),
-                ('topics', self._get_topics),
-                ('existing_readme', self._get_existing_readme),
-                ('package_files', self._get_package_files)
+                ('existing_readme', self._get_complete_readme),
+                ('package_files', self._get_package_files),
+                ('key_files', self._get_key_project_files)
             ]
             
             for section_name, section_func in data_sections:
@@ -610,9 +605,9 @@ class GitHubCollector:
         names = response_data.get('names', [])
         return names if isinstance(names, list) else []
     
-    def _get_existing_readme(self, owner: str, repo: str) -> Dict[str, Any]:
-        """Get existing README content if available"""
-        readme_files = ['README.md', 'README.txt', 'README.rst', 'README', 'readme.md']
+    def _get_complete_readme(self, owner: str, repo: str) -> Dict[str, Any]:
+        """Get COMPLETE existing README content - essential for AI to understand the project"""
+        readme_files = ['README.md', 'README.txt', 'README.rst', 'README', 'readme.md', 'Readme.md']
         
         for readme_file in readme_files:
             url = f"{self.base_url}/repos/{owner}/{repo}/contents/{readme_file}"
@@ -622,29 +617,99 @@ class GitHubCollector:
                 content_b64 = response_data.get('content', '')
                 if content_b64:
                     try:
-                        # Decode base64 content
+                        # Decode COMPLETE base64 content - no truncation!
                         content = base64.b64decode(content_b64).decode('utf-8')
                         
                         return {
                             'exists': True,
                             'filename': readme_file,
-                            'content': content[:1000],  # First 1000 chars
+                            'content': content,  # FULL content for AI
                             'size': response_data.get('size', 0),
-                            'full_content_available': len(content) > 1000
+                            'lines': len(content.split('\n'))
                         }
                     except Exception as e:
                         self.log(f"Error decoding README content: {e}")
                         continue
         
-        return {'exists': False}
+        return {'exists': False, 'content': '', 'filename': 'None'}
+    
+    def _get_key_project_files(self, owner: str, repo: str) -> Dict[str, Any]:
+        """Get key project files that help AI understand the project structure"""
+        key_files = {
+            # Web frameworks
+            'index.html': 'Web project entry point',
+            'index.js': 'JavaScript entry point', 
+            'app.js': 'Express/Node app',
+            'server.js': 'Node server',
+            'main.js': 'Main JavaScript file',
+            
+            # Python
+            'main.py': 'Python entry point',
+            'app.py': 'Flask/Django app',
+            'manage.py': 'Django management',
+            '__init__.py': 'Python package',
+            
+            # Config files
+            '.env.example': 'Environment template',
+            'config.js': 'Configuration',
+            'config.py': 'Python config',
+            
+            # Documentation
+            'CONTRIBUTING.md': 'Contributing guidelines',
+            'CHANGELOG.md': 'Change history',
+            'LICENSE': 'License file',
+            
+            # Docker
+            'Dockerfile': 'Docker configuration',
+            'docker-compose.yml': 'Docker compose',
+            
+            # CI/CD
+            '.github/workflows/main.yml': 'GitHub Actions',
+            '.travis.yml': 'Travis CI',
+            'netlify.toml': 'Netlify config'
+        }
+        
+        found_files = {}
+        
+        for filename, description in key_files.items():
+            url = f"{self.base_url}/repos/{owner}/{repo}/contents/{filename}"
+            response_data = self._make_api_request(url)
+            
+            if response_data and 'error' not in response_data and isinstance(response_data, dict):
+                content_b64 = response_data.get('content', '')
+                if content_b64:
+                    try:
+                        content = base64.b64decode(content_b64).decode('utf-8')
+                        found_files[filename] = {
+                            'description': description,
+                            'content': content[:1500],  # Reasonable limit for key files
+                            'size': response_data.get('size', 0),
+                            'truncated': len(content) > 1500
+                        }
+                    except Exception as e:
+                        found_files[filename] = {
+                            'description': description,
+                            'error': f'Could not decode: {str(e)}'
+                        }
+        
+        return found_files
     
     def _get_package_files(self, owner: str, repo: str) -> Dict[str, Any]:
-        """Get content of important package/dependency files"""
+        """Get COMPLETE content of package/dependency files - crucial for AI to understand tech stack"""
         package_files = {}
         important_files = [
-            'package.json', 'requirements.txt', 'setup.py', 
-            'Cargo.toml', 'go.mod', 'composer.json', 
-            'Gemfile', 'pom.xml', 'build.gradle'
+            'package.json',      # Node.js
+            'requirements.txt',  # Python
+            'setup.py',         # Python
+            'pyproject.toml',   # Modern Python
+            'Cargo.toml',       # Rust
+            'go.mod',           # Go
+            'composer.json',    # PHP
+            'Gemfile',          # Ruby
+            'pom.xml',          # Java Maven
+            'build.gradle',     # Java Gradle
+            'yarn.lock',        # Node.js Yarn
+            'package-lock.json' # Node.js NPM
         ]
         
         for filename in important_files:
@@ -656,10 +721,11 @@ class GitHubCollector:
                 if content_b64:
                     try:
                         content = base64.b64decode(content_b64).decode('utf-8')
+                        # Get FULL content for package files - AI needs complete dependency info
                         package_files[filename] = {
-                            'content': content[:2000],  # First 2000 chars
+                            'content': content,  # Complete content
                             'size': response_data.get('size', 0),
-                            'truncated': len(content) > 2000
+                            'lines': len(content.split('\n'))
                         }
                     except Exception as e:
                         package_files[filename] = {'error': f'Could not decode: {str(e)}'}
