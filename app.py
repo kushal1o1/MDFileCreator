@@ -19,6 +19,7 @@ except ImportError:
 from md_generator import MarkdownGenerator
 from ui_components import ListManager, EnvVarsManager, ImageGallery, TechnologySelector
 from ui_components import TemplateSelector, FileStructureEditor, UsageCodeEditor
+from ai_integration import AIIntegration
 
 # Common license options
 LICENSE_OPTIONS = [
@@ -74,8 +75,9 @@ class MDCreatorApp(CTk):
         self.tabview = CTkTabview(self.form_frame)
         self.tabview.pack(fill="both", expand=True)
         
-        # Create tabs
+        # Create tabs - AI Generator is now first!
         tabs = [
+            "🤖 AI Generator", 
             "Basic Info", 
             "Features", 
             "Images", 
@@ -91,7 +93,8 @@ class MDCreatorApp(CTk):
         for tab in tabs:
             self.tabview.add(tab)
             
-        # Setup each tab
+        # Setup each tab - AI Generator first
+        self.setup_ai_generator_tab()
         self.setup_basic_tab()
         self.setup_features_tab()
         self.setup_images_tab()
@@ -644,6 +647,633 @@ class MDCreatorApp(CTk):
         
         # Populate technologies
         self.tech_selector.set_items(data.get("tech", []))
+        
+    def setup_ai_generator_tab(self):
+        """Setup AI Generator tab with enhanced UI and loading indicators"""
+        tab = self.tabview.tab("🤖 AI Generator")
+        
+        # Create main container with modern styling
+        content_frame = CTkScrollableFrame(tab)
+        content_frame.pack(fill="both", expand=True, padx=25, pady=25)
+        
+        # Hero section with gradient-like styling
+        hero_frame = CTkFrame(content_frame, height=120, corner_radius=15)
+        hero_frame.pack(fill="x", pady=(0, 30))
+        hero_frame.pack_propagate(False)
+        
+        # Title with emoji and modern typography
+        title_frame = CTkFrame(hero_frame, fg_color="transparent")
+        title_frame.pack(expand=True, fill="both", padx=30, pady=20)
+        
+        CTkLabel(
+            title_frame, 
+            text="🚀 AI-Powered README Generator", 
+            font=("Segoe UI", 24, "bold"),
+            text_color=("#1f2937", "#f9fafb")
+        ).pack(anchor="w")
+        
+        CTkLabel(
+            title_frame, 
+            text="Transform your GitHub repository into a professional README in seconds",
+            font=("Segoe UI", 14),
+            text_color=("#6b7280", "#d1d5db")
+        ).pack(anchor="w", pady=(5, 0))
+        
+        # Input section with enhanced styling
+        input_section = CTkFrame(content_frame, corner_radius=12)
+        input_section.pack(fill="x", pady=(0, 25))
+        
+        input_container = CTkFrame(input_section, fg_color="transparent")
+        input_container.pack(fill="both", expand=True, padx=25, pady=25)
+        
+        # README Style Selection
+        style_frame = CTkFrame(input_container, fg_color="transparent")
+        style_frame.pack(fill="x", pady=(0, 20))
+        
+        style_left = CTkFrame(style_frame, fg_color="transparent")
+        style_left.pack(side="left", fill="x", expand=True)
+        
+        CTkLabel(
+            style_left, 
+            text="🎨 README Style", 
+            font=("Segoe UI", 16, "bold")
+        ).pack(anchor="w")
+        
+        # Style selector
+        readme_styles = [
+            "🔥 Modern & Trendy",
+            "📊 Professional & Corporate", 
+            "🚀 Developer Focused",
+            "📝 Simple & Clean",
+            "🎯 Detailed & Comprehensive",
+            "🤖 Let AI Choose Best Style"
+        ]
+        
+        self.readme_style_var = tk.StringVar(value="🤖 Let AI Choose Best Style")
+        style_dropdown = CTkComboBox(
+            style_frame,
+            values=readme_styles,
+            variable=self.readme_style_var,
+            width=250,
+            height=35,
+            font=("Segoe UI", 12)
+        )
+        style_dropdown.pack(side="right")
+        
+        # URL input with label and help text
+        url_label_frame = CTkFrame(input_container, fg_color="transparent")
+        url_label_frame.pack(fill="x", pady=(0, 8))
+        
+        CTkLabel(
+            url_label_frame, 
+            text="📂 GitHub Repository URL", 
+            font=("Segoe UI", 16, "bold")
+        ).pack(side="left")
+        
+        CTkLabel(
+            url_label_frame, 
+            text="• Public repositories only", 
+            font=("Segoe UI", 11),
+            text_color="gray60"
+        ).pack(side="right")
+        
+        # URL input field with modern styling
+        self.github_url_var = tk.StringVar()
+        self.github_url_entry = CTkEntry(
+            input_container, 
+            textvariable=self.github_url_var, 
+            placeholder_text="https://github.com/username/repository-name",
+            height=45,
+            font=("Segoe UI", 13),
+            corner_radius=8
+        )
+        self.github_url_entry.pack(fill="x", pady=(0, 15))
+        
+        # Generate button with enhanced styling
+        button_frame = CTkFrame(input_container, fg_color="transparent")
+        button_frame.pack(fill="x")
+        
+        self.generate_btn = CTkButton(
+            button_frame,
+            text="🤖 Generate Professional README",
+            command=self.generate_ai_readme,
+            height=50,
+            font=("Segoe UI", 15, "bold"),
+            corner_radius=10,
+            fg_color=("#2563eb", "#3b82f6"),
+            hover_color=("#1d4ed8", "#2563eb")
+        )
+        self.generate_btn.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        
+        # Quick fill button for testing
+        quick_fill_btn = CTkButton(
+            button_frame,
+            text="📝 Use Sample",
+            command=self.fill_sample_url,
+            height=50,
+            width=120,
+            font=("Segoe UI", 12),
+            corner_radius=10,
+            fg_color="gray40",
+            hover_color="gray50"
+        )
+        quick_fill_btn.pack(side="right")
+        
+        # Progress section with modern indicators
+        progress_section = CTkFrame(content_frame, corner_radius=12)
+        progress_section.pack(fill="x", pady=(0, 25))
+        
+        progress_container = CTkFrame(progress_section, fg_color="transparent")
+        progress_container.pack(fill="both", expand=True, padx=25, pady=20)
+        
+        # Progress header
+        progress_header = CTkFrame(progress_container, fg_color="transparent")
+        progress_header.pack(fill="x", pady=(0, 15))
+        
+        CTkLabel(
+            progress_header, 
+            text="⚡ Generation Status", 
+            font=("Segoe UI", 16, "bold")
+        ).pack(side="left")
+        
+        # Status indicator with modern styling
+        self.ai_status_var = tk.StringVar(value="Ready to generate your professional README...")
+        self.ai_status_label = CTkLabel(
+            progress_container, 
+            textvariable=self.ai_status_var,
+            font=("Segoe UI", 13),
+            text_color=("#374151", "#e5e7eb"),
+            wraplength=800,
+            justify="left"
+        )
+        self.ai_status_label.pack(anchor="w", fill="x", pady=(0, 10))
+        
+        # Progress steps indicator
+        self.progress_steps_frame = CTkFrame(progress_container, fg_color="transparent")
+        self.progress_steps_frame.pack(fill="x", pady=(0, 10))
+        
+        self.setup_progress_steps()
+        
+        # Generated README section with enhanced preview
+        preview_section = CTkFrame(content_frame, corner_radius=12)
+        preview_section.pack(fill="both", expand=True)
+        
+        preview_container = CTkFrame(preview_section, fg_color="transparent")
+        preview_container.pack(fill="both", expand=True, padx=25, pady=20)
+        
+        # Preview header with action buttons
+        preview_header = CTkFrame(preview_container, fg_color="transparent")
+        preview_header.pack(fill="x", pady=(0, 15))
+        
+        CTkLabel(
+            preview_header, 
+            text="📄 Generated README Preview", 
+            font=("Segoe UI", 16, "bold")
+        ).pack(side="left")
+        
+        # Action buttons container
+        btn_container = CTkFrame(preview_header, fg_color="transparent")
+        btn_container.pack(side="right")
+        
+        self.copy_ai_btn = CTkButton(
+            btn_container,
+            text="📋 Copy to Clipboard",
+            command=self.copy_ai_readme,
+            width=150,
+            height=35,
+            font=("Segoe UI", 12, "bold"),
+            state="disabled",
+            corner_radius=8,
+            fg_color=("#059669", "#10b981"),
+            hover_color=("#047857", "#059669")
+        )
+        self.copy_ai_btn.pack(side="right", padx=(10, 0))
+        
+        self.save_ai_btn = CTkButton(
+            btn_container,
+            text="💾 Save as README.md",
+            command=self.save_ai_readme,
+            width=150,
+            height=35,
+            font=("Segoe UI", 12, "bold"),
+            state="disabled",
+            corner_radius=8,
+            fg_color=("#7c3aed", "#8b5cf6"),
+            hover_color=("#6d28d9", "#7c3aed")
+        )
+        self.save_ai_btn.pack(side="right", padx=(10, 0))
+        
+        # Apply to Form button
+        self.apply_ai_btn = CTkButton(
+            btn_container,
+            text="✨ Apply to Form",
+            command=self.apply_ai_to_form,
+            width=140,
+            height=35,
+            font=("Segoe UI", 12, "bold"),
+            state="disabled",
+            corner_radius=8,
+            fg_color=("#dc2626", "#ef4444"),
+            hover_color=("#b91c1c", "#dc2626")
+        )
+        self.apply_ai_btn.pack(side="right", padx=(10, 0))
+        
+        # Text area for generated README with modern styling
+        self.ai_readme_textbox = CTkTextbox(
+            preview_container,
+            font=("JetBrains Mono", 11),
+            wrap="word",
+            corner_radius=8,
+            border_width=1
+        )
+        self.ai_readme_textbox.pack(fill="both", expand=True)
+        
+        # Insert placeholder text
+        placeholder_text = """🔄 Your generated README will appear here...
+
+✨ Features of AI-generated README:
+• Professional structure and formatting
+• Comprehensive project analysis
+• Technology stack detection
+• Installation and usage instructions
+• Contributing guidelines
+• License information
+• And much more!
+
+💡 Tip: Enter a GitHub repository URL above and click "Generate Professional README" to get started."""
+        
+        self.ai_readme_textbox.insert("1.0", placeholder_text)
+        self.ai_readme_textbox.configure(state="disabled")
+        
+        # Initialize AI integration
+        self.ai_integration = AIIntegration(
+            progress_callback=self.update_ai_progress,
+            result_callback=self.handle_ai_result
+        )
+        
+        # Store generated content and metadata
+        self.generated_readme_content = ""
+        self.generated_readme_metadata = {}
+        
+    def setup_progress_steps(self):
+        """Setup progress steps indicator"""
+        self.progress_steps = [
+            {"text": "🔍 Analyzing Repository", "status": "pending"},
+            {"text": "📊 Collecting Data", "status": "pending"},
+            {"text": "🧠 Processing with AI", "status": "pending"},
+            {"text": "📝 Generating README", "status": "pending"},
+            {"text": "✨ Finalizing", "status": "pending"}
+        ]
+        
+        # Create step indicators
+        steps_container = CTkFrame(self.progress_steps_frame, fg_color="transparent")
+        steps_container.pack(fill="x")
+        
+        self.step_labels = []
+        for i, step in enumerate(self.progress_steps):
+            step_frame = CTkFrame(steps_container, fg_color="transparent")
+            step_frame.pack(side="left", fill="x", expand=True, padx=5)
+            
+            # Step indicator circle and text
+            indicator_frame = CTkFrame(step_frame, fg_color="transparent")
+            indicator_frame.pack()
+            
+            # Circle indicator
+            circle_label = CTkLabel(
+                indicator_frame,
+                text="○",
+                font=("Segoe UI", 16),
+                text_color="gray60",
+                width=20
+            )
+            circle_label.pack()
+            
+            # Step text
+            text_label = CTkLabel(
+                indicator_frame,
+                text=step["text"],
+                font=("Segoe UI", 10),
+                text_color="gray60",
+                wraplength=100
+            )
+            text_label.pack(pady=(2, 0))
+            
+            self.step_labels.append({
+                "circle": circle_label,
+                "text": text_label,
+                "frame": step_frame
+            })
+    
+    def update_progress_step(self, step_index, status="active"):
+        """Update a specific progress step"""
+        if 0 <= step_index < len(self.step_labels):
+            circle = self.step_labels[step_index]["circle"]
+            text = self.step_labels[step_index]["text"]
+            
+            if status == "active":
+                circle.configure(text="●", text_color="#3b82f6")
+                text.configure(text_color="#3b82f6")
+            elif status == "completed":
+                circle.configure(text="✓", text_color="#10b981")
+                text.configure(text_color="#10b981")
+            elif status == "error":
+                circle.configure(text="✗", text_color="#ef4444")
+                text.configure(text_color="#ef4444")
+            else:  # pending
+                circle.configure(text="○", text_color="gray60")
+                text.configure(text_color="gray60")
+    
+    def reset_progress_steps(self):
+        """Reset all progress steps to pending"""
+        for i in range(len(self.step_labels)):
+            self.update_progress_step(i, "pending")
+    
+    def fill_sample_url(self):
+        """Fill sample URL for testing"""
+        sample_url = "https://github.com/kushal1o1/MDFileCreator"
+        self.github_url_var.set(sample_url)
+    
+    def generate_ai_readme(self):
+        """Generate README using AI with enhanced progress tracking"""
+        github_url = self.github_url_var.get().strip()
+        
+        if not github_url:
+            messagebox.showerror("Error", "Please enter a GitHub repository URL")
+            return
+        
+        if not github_url.startswith("https://github.com/"):
+            messagebox.showerror("Error", "Please enter a valid GitHub URL (https://github.com/...)")
+            return
+        
+        # Reset progress indicators
+        self.reset_progress_steps()
+        
+        # Disable generate button and show loading state
+        self.generate_btn.configure(
+            state="disabled", 
+            text="🔄 Generating README...",
+            fg_color="gray50"
+        )
+        
+        # Disable action buttons
+        self.copy_ai_btn.configure(state="disabled")
+        self.save_ai_btn.configure(state="disabled")
+        self.apply_ai_btn.configure(state="disabled")
+        
+        # Clear previous content
+        self.ai_readme_textbox.configure(state="normal")
+        self.ai_readme_textbox.delete("1.0", "end")
+        self.ai_readme_textbox.insert("1.0", "🔄 Generating your professional README...\n\nPlease wait while we analyze your repository and create comprehensive documentation.")
+        self.ai_readme_textbox.configure(state="disabled")
+        
+        self.generated_readme_content = ""
+        self.generated_readme_metadata = {}
+        
+        # Start AI generation with selected style
+        selected_style = self.readme_style_var.get()
+        self.ai_integration.generate_readme_async(github_url, selected_style)
+    
+    def update_ai_progress(self, message):
+        """Update progress message and step indicators"""
+        self.ai_status_var.set(message)
+        self.update_idletasks()
+        
+        # Update progress steps based on message content
+        if "Starting" in message or "Initializing" in message:
+            self.update_progress_step(0, "active")
+        elif "Collecting" in message or "GitHub data" in message:
+            self.update_progress_step(0, "completed")
+            self.update_progress_step(1, "active")
+        elif "Processing" in message or "AI" in message:
+            self.update_progress_step(1, "completed")
+            self.update_progress_step(2, "active")
+        elif "Generating" in message:
+            self.update_progress_step(2, "completed")
+            self.update_progress_step(3, "active")
+        elif "complete" in message.lower() or "success" in message.lower():
+            self.update_progress_step(3, "completed")
+            self.update_progress_step(4, "completed")
+    
+    def handle_ai_result(self, result):
+        """Handle AI generation result with enhanced UI updates"""
+        # Re-enable generate button
+        self.generate_btn.configure(
+            state="normal", 
+            text="🤖 Generate Professional README",
+            fg_color=("#2563eb", "#3b82f6")
+        )
+        
+        if result['success']:
+            # Store generated content and metadata
+            self.generated_readme_content = result['content']
+            self.generated_readme_metadata = result.get('github_data', {})
+            
+            # Display generated README
+            self.ai_readme_textbox.configure(state="normal")
+            self.ai_readme_textbox.delete("1.0", "end")
+            self.ai_readme_textbox.insert("1.0", self.generated_readme_content)
+            self.ai_readme_textbox.configure(state="disabled")
+            
+            # Enable action buttons
+            self.copy_ai_btn.configure(state="normal")
+            self.save_ai_btn.configure(state="normal")
+            self.apply_ai_btn.configure(state="normal")
+            
+            # Update status with success info
+            repo_info = self.generated_readme_metadata
+            status_text = f"✅ README generated successfully! Repository: {repo_info.get('owner', 'Unknown')}/{repo_info.get('repo', 'Unknown')}"
+            if repo_info.get('stars'):
+                status_text += f" ({repo_info.get('stars')} stars)"
+            
+            self.ai_status_var.set(status_text)
+            
+            # Complete all progress steps
+            for i in range(len(self.step_labels)):
+                self.update_progress_step(i, "completed")
+            
+            # Show success message
+            messagebox.showinfo(
+                "Success", 
+                f"Professional README generated successfully!\n\n"
+                f"Repository: {repo_info.get('owner', 'Unknown')}/{repo_info.get('repo', 'Unknown')}\n"
+                f"Language: {repo_info.get('language', 'Unknown')}\n"
+                f"Content Length: {len(self.generated_readme_content):,} characters"
+            )
+            
+        else:
+            # Handle error
+            error_msg = result.get('error', 'Unknown error occurred')
+            
+            # Show error in preview area
+            self.ai_readme_textbox.configure(state="normal")
+            self.ai_readme_textbox.delete("1.0", "end")
+            error_text = f"❌ Generation Failed\n\nError: {error_msg}\n\n"
+            
+            # Add troubleshooting tips
+            error_text += "💡 Troubleshooting Tips:\n"
+            error_text += "• Ensure the repository URL is correct and public\n"
+            error_text += "• Check your internet connection\n"
+            error_text += "• Verify that required API keys are configured\n"
+            error_text += "• Try again in a few moments\n\n"
+            
+            # Add debug logs if available
+            logs = result.get('logs', [])
+            if logs:
+                error_text += f"🔍 Debug Information:\n"
+                for log in logs[-5:]:  # Show last 5 logs
+                    error_text += f"• {log}\n"
+            
+            self.ai_readme_textbox.insert("1.0", error_text)
+            self.ai_readme_textbox.configure(state="disabled")
+            
+            # Update status and progress
+            self.ai_status_var.set(f"❌ Error: {error_msg}")
+            
+            # Mark current step as error
+            for i, step in enumerate(self.progress_steps):
+                if "active" in str(self.step_labels[i]["circle"].cget("text_color")):
+                    self.update_progress_step(i, "error")
+                    break
+            
+            # Show error dialog
+            messagebox.showerror(
+                "Generation Failed", 
+                f"Failed to generate README:\n\n{error_msg}\n\nPlease check the repository URL and try again."
+            )
+    
+    def copy_ai_readme(self):
+        """Copy generated README to clipboard"""
+        if self.generated_readme_content:
+            self.clipboard_clear()
+            self.clipboard_append(self.generated_readme_content)
+            self.ai_status_var.set("📋 README copied to clipboard!")
+            
+            # Show toast-like notification
+            messagebox.showinfo("Copied!", "README content has been copied to your clipboard.")
+        else:
+            messagebox.showerror("Error", "No README content to copy")
+    
+    def save_ai_readme(self):
+        """Save generated README to file"""
+        if not self.generated_readme_content:
+            messagebox.showerror("Error", "No README content to save")
+            return
+        
+        from tkinter import filedialog
+        
+        # Suggest filename based on repository info
+        default_filename = "README.md"
+        if self.generated_readme_metadata:
+            repo_name = self.generated_readme_metadata.get('repo', 'README')
+            default_filename = f"{repo_name}_README.md"
+        
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".md",
+            filetypes=[("Markdown Files", "*.md"), ("Text Files", "*.txt"), ("All Files", "*.*")],
+            initialfile=default_filename
+        )
+        
+        if file_path:
+            try:
+                with open(file_path, "w", encoding="utf-8") as file:
+                    file.write(self.generated_readme_content)
+                    
+                self.ai_status_var.set(f"💾 README saved to {os.path.basename(file_path)}")
+                messagebox.showinfo("Saved!", f"README has been saved to:\n{file_path}")
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save file: {str(e)}")
+                self.ai_status_var.set(f"❌ Error saving README: {str(e)}")
+    
+    def apply_ai_to_form(self):
+        """Apply AI-generated content to the manual form fields"""
+        if not self.generated_readme_content:
+            messagebox.showerror("Error", "No AI-generated content to apply")
+            return
+        
+        # Ask for confirmation
+        result = messagebox.askyesno(
+            "Apply AI Content", 
+            "This will replace your current form data with extracted information from the AI-generated README.\n\n"
+            "Current form data will be lost. Do you want to continue?",
+            icon="warning"
+        )
+        
+        if not result:
+            return
+        
+        try:
+            # Extract basic information from metadata and content
+            repo_info = self.generated_readme_metadata
+            
+            # Update basic info fields
+            if repo_info.get('repo'):
+                self.project_name_var.set(repo_info['repo'])
+            if repo_info.get('owner'):
+                self.username_var.set(repo_info['owner'])
+            
+            # Try to extract description from README content
+            content_lines = self.generated_readme_content.split('\n')
+            description = ""
+            
+            # Look for description patterns in the README
+            for i, line in enumerate(content_lines):
+                if line.strip().startswith('#') and 'description' not in line.lower():
+                    # Look for content after the title
+                    if i + 1 < len(content_lines):
+                        next_line = content_lines[i + 1].strip()
+                        if next_line and not next_line.startswith('#') and not next_line.startswith('!'):
+                            description = next_line
+                            break
+            
+            if description:
+                self.concisedesc_var.set(description[:100] + "..." if len(description) > 100 else description)
+            
+            # Set overview with first few paragraphs
+            overview_text = ""
+            in_overview = False
+            
+            for line in content_lines:
+                if line.strip().startswith('## ') and ('overview' in line.lower() or 'about' in line.lower() or 'description' in line.lower()):
+                    in_overview = True
+                    continue
+                elif line.strip().startswith('##') and in_overview:
+                    break
+                elif in_overview and line.strip():
+                    overview_text += line + "\n"
+                    if len(overview_text) > 500:  # Limit overview length
+                        break
+            
+            if overview_text:
+                self.overview.delete("0.0", "end")
+                self.overview.insert("0.0", overview_text.strip())
+            
+            # Update technology field if we can detect language
+            if repo_info.get('language'):
+                current_techs = self.tech_selector.selected_techs
+                if repo_info['language'] not in current_techs:
+                    current_techs.append(repo_info['language'])
+                    self.tech_selector.set_items(current_techs)
+            
+            # Update all fields in the markdown generator
+            self.update_field("project_name", self.project_name_var.get())
+            self.update_field("username", self.username_var.get())
+            self.update_field("concisedesc", self.concisedesc_var.get())
+            self.update_field("overview", overview_text.strip())
+            
+            # Switch to Basic Info tab to show the applied changes
+            self.tabview.set("Basic Info")
+            
+            self.ai_status_var.set("✨ AI content applied to form successfully!")
+            messagebox.showinfo(
+                "Applied Successfully!", 
+                "AI-generated content has been applied to the form fields.\n\n"
+                "You can now review and modify the information in the other tabs."
+            )
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to apply AI content to form: {str(e)}")
+            self.ai_status_var.set(f"❌ Error applying content: {str(e)}")
         
     def save_markdown(self):
         """Save markdown content to a file"""
